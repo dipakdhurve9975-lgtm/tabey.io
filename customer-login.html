@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>SANGHX • Customer Login</title>
+  <title>TABEY • Customer Login</title>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
   <style>
     :root { --bg: #0F172A; --card: #1E293B; --text: #fff; --primary: #FF4B3A; --muted: #94A3B8; }
@@ -142,14 +142,14 @@
   };
 
   window.guestMode = () => {
-    localStorage.removeItem("sanghx_user");
-    localStorage.setItem("sanghx_role", "customer");
+    localStorage.removeItem("tabey_user");
+    localStorage.setItem("tabey_role", "customer");
     location.href = "customer.html";
   };
 
   function saveAndRedirect(name, mobile, address) {
-    localStorage.setItem("sanghx_user", JSON.stringify({ name, mobile, address }));
-    localStorage.setItem("sanghx_role", "customer");
+    localStorage.setItem("tabey_user", JSON.stringify({ name, mobile, address }));
+    localStorage.setItem("tabey_role", "customer");
     location.href = "customer.html";
   }
 </script>
