@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>SANGHX • Partner App</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+  <style>
+    body { background: #0F172A; font-family: 'Outfit', sans-serif; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; padding: 20px; }
+    .card { background: #1E293B; width: 100%; max-width: 360px; padding: 30px; border-radius: 24px; border: 1px solid #334155; }
+    h1 { font-size: 24px; margin-bottom: 5px; }
+    p { color: #94A3B8; font-size: 14px; margin-bottom: 25px; }
+    
+    .tabs { display: flex; background: #0F172A; padding: 5px; border-radius: 12px; margin-bottom: 20px; }
+    .tab { flex: 1; padding: 10px; text-align: center; border-radius: 8px; font-weight: 700; font-size: 14px; cursor: pointer; transition: 0.3s; color: #64748B; }
+    .tab.active { background: #3B82F6; color: white; }
+
+    input { width: 100%; padding: 15px; background: #0F172A; border: 1px solid #334155; border-radius: 12px; color: white; margin-bottom: 12px; outline: none; font-size: 15px; }
+    input:focus { border-color: #3B82F6; }
+    
+    .btn { width: 100%; padding: 16px; background: #10B981; color: white; border: none; border-radius: 12px; font-weight: 800; font-size: 16px; cursor: pointer; margin-top: 10px; }
+    .btn:active { transform: scale(0.98); }
+    .err { color: #EF4444; font-size: 13px; margin-bottom: 10px; text-align: center; min-height: 20px; }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h1>Partner Portal 🛵</h1>
+    <p>Deliver happiness, earn respect.</p>
+    
+    <div class="tabs">
+      <div class="tab active" onclick="switchMode('login')" id="tabLogin">Login</div>
+      <div class="tab" onclick="switchMode('register')" id="tabRegister">Join</div>
+    </div>
+
+    <div class="err" id="msg"></div>
+
+    <form id="authForm" onsubmit="event.preventDefault(); handleSubmit();">
+      <div id="regFields" style="display:none;">
+        <input type="text" id="rName" placeholder="Full Name">
+      </div>
+      
+      <input type="tel" id="rMobile" placeholder="Mobile Number" required>
+      <input type="password" id="rPass" placeholder="Password" required>
+      <button class="btn" id="submitBtn">Login</button>
+    </form>
+  </div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  const app = initializeApp({ apiKey: "AIzaSyCuVtOv09ixwnZszRKxjq3PQtiDn3kE5ng", projectId: "tabey-foods" });
+  const db = getFirestore(app);
+
+  let mode = "login";
+  const els = {
+    tabLogin: document.getElementById("tabLogin"),
+    tabReg: document.getElementById("tabRegister"),
+    regFields: document.getElementById("regFields"),
+    btn: document.getElementById("submitBtn"),
+    msg: document.getElementById("msg")
+  };
+
+  window.switchMode = (m) => {
+    mode = m;
+    els.tabLogin.className = m==='login' ? 'tab active' : 'tab';
+    els.tabReg.className = m==='register' ? 'tab active' : 'tab';
+    els.regFields.style.display = m==='register' ? 'block' : 'none';
+    els.btn.innerText = m==='register' ? 'Register & Start' : 'Login';
+    els.msg.innerText = "";
+  };
+
+  window.handleSubmit = async () => {
+    const mobile = document.getElementById("rMobile").value.trim();
+    const pass = document.getElementById("rPass").value.trim();
+    
+    if(!mobile || !pass) return els.msg.innerText = "All fields required";
+    
+    els.btn.disabled = true; els.btn.innerText = "Processing...";
+
+    try {
+      if(mode === 'register') {
+        const name = document.getElementById("rName").value.trim();
+        // REMOVED VEHICLE VALIDATION
+        if(!name) throw "Name required";
+
+        // Check exist
+        const q = query(collection(db, "riders"), where("mobile", "==", mobile));
+        const snap = await getDocs(q);
+        if(!snap.empty) throw "Mobile already registered!";
+
+        // Create
+        const docRef = await addDoc(collection(db, "riders"), {
+           name, mobile, password: pass, 
+           joined: new Date().toISOString(), status: "verified",
+           earnings: 0, cashInHand: 0
+        });
+        
+        localStorage.setItem("rider_user", JSON.stringify({ id: docRef.id, name, mobile }));
+        location.href = "rider.html";
+
+      } else {
+        // Login
+        const q = query(collection(db, "riders"), where("mobile", "==", mobile), where("password", "==", pass));
+        const snap = await getDocs(q);
+        if(snap.empty) throw "Invalid Credentials";
+        
+        const d = snap.docs[0].data();
+        localStorage.setItem("rider_user", JSON.stringify({ id: snap.docs[0].id, ...d }));
+        location.href = "rider.html";
+      }
+    } catch(e) {
+      els.msg.innerText = typeof e === 'string' ? e : "Error occurred";
+      els.btn.disabled = false; els.btn.innerText = mode==='login'?'Login':'Register';
+    }
+  };
+</script>
+</body>
+</html>

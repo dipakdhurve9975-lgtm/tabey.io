@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Partner App</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+<style>
+  :root { --bg: #0B0F19; --card: #151C2C; --text: #E2E8F0; --green: #10B981; --primary: #3B82F6; }
+  body { background: var(--bg); color: var(--text); padding-bottom: 90px; font-family: 'Outfit', sans-serif; }
+  
+  .header { background: #151C2C; padding: 15px; position: sticky; top: 0; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 20px rgba(0,0,0,0.2); z-index: 100; }
+  .rider-info h2 { margin: 0; font-size: 16px; } .rider-info span { font-size: 12px; color: #94A3B8; }
+  
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 15px; }
+  .card { background: #1e293b; padding: 15px; border-radius: 12px; border: 1px solid #333; }
+  .card h2 { margin: 5px 0 0; color: #fff; }
+  .lbl { font-size: 11px; color: #94A3B8; text-transform: uppercase; }
+
+  .btn-online { width: 100%; padding: 18px; background: #1F2937; color: #999; border-radius: 15px; font-weight: 800; border: none; cursor: pointer; transition: 0.3s; }
+  .btn-online.on { background: var(--green); color: #064E3B; box-shadow: 0 0 15px rgba(16, 185, 129, 0.2); }
+  
+  /* ORDER CARD FIXED */
+  .order-card { background: #151C2C; padding: 20px; border-radius: 15px; margin: 15px; border-left: 4px solid var(--primary); animation: slideUp 0.3s ease; position: relative; }
+  .dist-badge { position: absolute; top: 15px; right: 15px; background: #333; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+  .store-name { font-size: 18px; font-weight: 800; margin-bottom: 5px; color: white; }
+  .cust-addr { font-size: 13px; color: #94A3B8; display: flex; align-items: center; gap: 5px; margin-bottom: 12px; }
+  
+  .item-list { background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; font-size: 13px; margin-bottom: 15px; color: #CBD5E1; line-height: 1.5; }
+  
+  .swipe-btn { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 10px; font-weight: 700; font-size: 16px; cursor: pointer; }
+  
+  /* ACTIVE MODE */
+  .active-overlay { position: fixed; inset: 0; background: #0B0F19; z-index: 200; display: none; flex-direction: column; }
+  .map-box { flex: 1; background: #222; display: flex; justify-content: center; align-items: center; color: #555; position: relative; }
+  .panel { background: #151C2C; padding: 25px; border-radius: 25px 25px 0 0; box-shadow: 0 -10px 40px rgba(0,0,0,0.5); }
+  
+  .step-row { display: flex; margin-bottom: 20px; position: relative; }
+  .step-row::after { content:""; position: absolute; top: 50%; width: 100%; height: 2px; background: #333; z-index: 0; }
+  .step { flex: 1; text-align: center; position: relative; z-index: 1; }
+  .dot { width: 16px; height: 16px; background: #333; border-radius: 50%; margin: 0 auto; border: 3px solid #151C2C; }
+  .step.done .dot { background: var(--green); transform: scale(1.2); }
+
+  .nav { position: fixed; bottom: 0; width: 100%; background: #151C2C; display: flex; justify-content: space-around; padding: 15px; z-index: 90; border-top: 1px solid #333; }
+  .nav i { font-size: 24px; color: #64748B; } .nav i.active { color: white; }
+  
+  @keyframes slideUp { from{transform: translateY(20px); opacity:0;} to{transform: translateY(0); opacity:1;} }
+</style>
+</head>
+<body>
+
+  <script>
+    const user = JSON.parse(localStorage.getItem("rider_user"));
+    if(!user) window.location.href = "rider-login.html";
+  </script>
+
+  <div id="homeView">
+    <div class="header">
+      <div class="rider-info"><h2>SANGHX</h2><span id="rName">Rider</span></div>
+      <div style="font-size:12px; font-weight:700; color:var(--green);" id="statusTxt">OFFLINE</div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="card"><div class="lbl">EARNINGS</div><h2 id="uiEarn">₹0</h2></div>
+      <div class="card"><div class="lbl">CASH IN HAND</div><h2 id="uiCash">₹0</h2></div>
+    </div>
+
+    <div style="padding:0 15px 15px;">
+      <button class="btn-online" id="onlineBtn" onclick="toggleOnline()">GO ONLINE</button>
+    </div>
+
+    <div id="feedList" style="padding:15px; padding-bottom: 100px;"></div>
+  </div>
+
+  <div id="activeView" class="active-overlay">
+    <div class="map-box">
+      <iframe width="100%" height="100%" frameborder="0" style="border:0; filter:invert(90%) hue-rotate(180deg); opacity:0.6;" 
+        src="https://www.google.com/maps/embed/v1/place?key=YOUR_API_KEY_HERE&q=Nagpur" allowfullscreen></iframe>
+      <div style="position:absolute; top:20px; left:20px; background:black; color:white; padding:8px 15px; border-radius:20px; font-size:12px; font-weight:700;">Live Navigation ↗</div>
+    </div>
+    
+    <div class="panel">
+      <div class="step-row">
+        <div class="step done" id="s1"><div class="dot"></div></div>
+        <div class="step" id="s2"><div class="dot"></div></div>
+        <div class="step" id="s3"><div class="dot"></div></div>
+      </div>
+      
+      <h2 id="actName" style="margin:0 0 5px;">Customer</h2>
+      <p id="actAddr" style="color:#94A3B8; font-size:13px; margin-bottom:20px;">Address...</p>
+      
+      <div style="display:flex; gap:10px; margin-bottom:15px;">
+        <button onclick="callCust()" style="flex:1; padding:10px; background:#334155; color:white; border:none; border-radius:10px;"><i class='bx bxs-phone'></i> Call</button>
+        <button onclick="openMap()" style="flex:1; padding:10px; background:#334155; color:white; border:none; border-radius:10px;"><i class='bx bxs-map'></i> Map</button>
+      </div>
+      
+      <button class="swipe-btn" id="actBtn" onclick="nextStep()">Arrived at Store</button>
+    </div>
+  </div>
+  
+  <nav class="nav">
+    <i class='bx bxs-home-alt-2 active'></i>
+    <i class='bx bxs-user-circle' onclick="logout()"></i>
+  </nav>
+  
+  <audio id="bell" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.m4a"></audio>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, collection, onSnapshot, query, orderBy, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  const app = initializeApp({ apiKey: "AIzaSyCuVtOv09ixwnZszRKxjq3PQtiDn3kE5ng", projectId: "tabey-foods" });
+  const db = getFirestore(app);
+  
+  document.getElementById("rName").innerText = user.name;
+  let isOnline=false, activeOrder=null, step=0;
+  const stats = { earn: Number(localStorage.getItem("r_earn")||0), cash: Number(localStorage.getItem("r_cash")||0) };
+  document.getElementById("uiEarn").innerText="₹"+stats.earn; document.getElementById("uiCash").innerText="₹"+stats.cash;
+
+  // Restore State
+  if(localStorage.getItem("r_active")) { 
+    activeOrder=JSON.parse(localStorage.getItem("r_active")); 
+    step=Number(localStorage.getItem("r_step")); 
+    renderActive(); 
+  }
+
+  // Auto Online
+  setTimeout(()=>{ if(!isOnline) toggleOnline(); }, 500);
+
+  window.toggleOnline = async () => {
+    isOnline = !isOnline;
+    const btn = document.getElementById("onlineBtn");
+    btn.classList.toggle("on");
+    document.getElementById("statusTxt").innerText = isOnline ? "ONLINE" : "OFFLINE";
+    btn.innerText = isOnline ? "YOU ARE ONLINE" : "GO ONLINE";
+    
+    if(isOnline) {
+       await updateDoc(doc(db,"riders",user.id), {status:"Online"});
+       
+       const q = query(collection(db,"orders"), orderBy("timestamp","desc"));
+       onSnapshot(q, snap=>{
+         if(!isOnline || activeOrder) return;
+         let h="";
+         let count = 0;
+         snap.forEach(d=>{
+            const o=d.data();
+            if(o.status==="Confirmed") {
+              count++;
+              document.getElementById("bell").play().catch(()=>{});
+              
+              // ✅ FIXED: Show Items List
+              const itemsList = o.items.map(i => `${i.qty}x ${i.name}`).join(", ");
+              const earn = Math.max(20, (o.customer.distanceKm || 2) * 6).toFixed(0);
+
+              h+=`
+              <div class="order-card">
+                <div class="dist-badge">${o.customer.distanceKm} km</div>
+                <div class="store-name">${o.items[0].storeName}</div>
+                <div class="cust-addr"><i class='bx bxs-map'></i> ${o.customer.address.slice(0,30)}...</div>
+                
+                <div class="item-list">${itemsList}</div>
+                
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                   <span style="color:#94A3B8; font-size:12px;">EARNING</span>
+                   <span style="font-size:20px; font-weight:800; color:var(--green);">₹${earn}</span>
+                </div>
+
+                <button class="swipe-btn" onclick="accept('${d.id}','${o.customer.name}','${o.customer.address}',${o.bill.total}, '${o.customer.mobile}')">
+                  Swipe to Accept
+                </button>
+              </div>`;
+            }
+         });
+         document.getElementById("feedList").innerHTML = h || "<div style='text-align:center; padding:40px; color:#666;'>Scanning for orders...</div>";
+       });
+    } else {
+       await updateDoc(doc(db,"riders",user.id), {status:"Offline"});
+       document.getElementById("feedList").innerHTML = "<div style='text-align:center; padding:40px; color:#666;'>Offline</div>";
+    }
+  };
+
+  window.accept = async (id,n,a,t,m) => {
+    activeOrder={id,n,a,t,m}; step=1; saveState();
+    await updateDoc(doc(db,"orders",id), {status:"Out for Delivery", rider:user.name});
+    renderActive();
+  };
+
+  window.nextStep = async () => {
+    const btn = document.getElementById("actBtn");
+    if(step===1) { step=2; document.getElementById("s2").classList.add("done"); btn.innerText="Picked Up"; }
+    else if(step===2) { step=3; document.getElementById("s3").classList.add("done"); btn.innerText="Collect ₹"+activeOrder.t+" & Finish"; btn.style.background="#10B981"; }
+    else {
+      await updateDoc(doc(db,"orders",activeOrder.id), {status:"Completed"});
+      stats.cash+=activeOrder.t; stats.earn+=30;
+      localStorage.setItem("r_cash",stats.cash); localStorage.setItem("r_earn",stats.earn);
+      document.getElementById("uiEarn").innerText="₹"+stats.earn; document.getElementById("uiCash").innerText="₹"+stats.cash;
+      activeOrder=null; localStorage.removeItem("r_active");
+      document.getElementById("activeView").style.display="none";
+      alert("Completed! ₹30 added to earnings.");
+    }
+    if(activeOrder) saveState();
+  };
+
+  function renderActive(){
+    document.getElementById("activeView").style.display="flex";
+    document.getElementById("actName").innerText=activeOrder.n;
+    document.getElementById("actAddr").innerText=activeOrder.a;
+    const btn = document.getElementById("actBtn");
+    if(step===1) btn.innerText="Arrived at Store";
+    if(step===2) { document.getElementById("s2").classList.add("done"); btn.innerText="Picked Up"; }
+    if(step===3) { document.getElementById("s2").classList.add("done"); document.getElementById("s3").classList.add("done"); btn.innerText="Collect ₹"+activeOrder.t; btn.style.background="#10B981"; }
+  }
+  
+  function saveState(){ localStorage.setItem("r_active",JSON.stringify(activeOrder)); localStorage.setItem("r_step",step); }
+  
+  window.callCust = () => location.href = `tel:${activeOrder.m}`;
+  window.openMap = () => window.open(`http://maps.google.com/?q=${activeOrder.a}`);
+  window.logout = () => { localStorage.removeItem("rider_user"); location.href="rider-login.html"; };
+</script>
+</body>
+</html>

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>SANGHX • Customer Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root { --bg: #0F172A; --card: #1E293B; --text: #fff; --primary: #FF4B3A; --muted: #94A3B8; }
+    body { background: var(--bg); font-family: 'Outfit', sans-serif; color: var(--text); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; }
+    
+    .card { background: var(--card); width: 100%; max-width: 360px; padding: 30px; border-radius: 24px; border: 1px solid #334155; text-align: center; position: relative; }
+    h1 { font-size: 28px; margin-bottom: 5px; }
+    p { color: var(--muted); font-size: 14px; margin-bottom: 25px; }
+
+    .tabs { display: flex; background: #0F172A; padding: 5px; border-radius: 12px; margin-bottom: 20px; }
+    .tab { flex: 1; padding: 12px; text-align: center; border-radius: 8px; font-weight: 700; font-size: 14px; cursor: pointer; transition: 0.3s; color: #64748B; }
+    .tab.active { background: var(--primary); color: white; }
+
+    input { width: 100%; padding: 16px; background: #0F172A; border: 1px solid #334155; border-radius: 12px; color: white; margin-bottom: 12px; outline: none; font-size: 15px; }
+    input:focus { border-color: var(--primary); }
+    
+    .btn { width: 100%; padding: 16px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 800; font-size: 16px; cursor: pointer; margin-top: 10px; transition: 0.2s; }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.7; cursor: not-allowed; }
+    
+    .skip { margin-top: 20px; font-size: 13px; color: var(--muted); text-decoration: underline; cursor: pointer; }
+    .err { color: #EF4444; font-size: 13px; margin-bottom: 10px; min-height: 20px; }
+
+    /* --- LEGAL FOOTER --- */
+    .legal-footer {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #334155;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 15px;
+    }
+    .legal-link {
+      font-size: 12px;
+      color: #64748B;
+      text-decoration: none;
+      transition: 0.2s;
+    }
+    .legal-link:hover { color: var(--primary); }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h1>Welcome Back 👋</h1>
+    <p>Login to save your orders & address.</p>
+    
+    <div class="tabs">
+      <div class="tab active" onclick="switchMode('login')" id="tabLogin">Login</div>
+      <div class="tab" onclick="switchMode('register')" id="tabRegister">Sign Up</div>
+    </div>
+
+    <div class="err" id="msg"></div>
+
+    <form onsubmit="event.preventDefault(); handleSubmit();">
+      <div id="regFields" style="display:none;">
+        <input type="text" id="cName" placeholder="Full Name">
+      </div>
+      <input type="tel" id="cMobile" placeholder="Mobile Number" required>
+      <input type="password" id="cPass" placeholder="Password (Create New)" required>
+      
+      <button class="btn" id="submitBtn">Login</button>
+    </form>
+
+    <div class="skip" onclick="guestMode()">Skip & Continue as Guest</div>
+
+    <div class="legal-footer">
+      <a href="terms.html" class="legal-link">Terms & Conditions</a>
+      <a href="privacy.html" class="legal-link">Privacy Policy</a>
+      <a href="support.html" class="legal-link">Help & Support</a>
+    </div>
+  </div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  const app = initializeApp({ apiKey: "AIzaSyCuVtOv09ixwnZszRKxjq3PQtiDn3kE5ng", projectId: "tabey-foods" });
+  const db = getFirestore(app);
+
+  let mode = "login";
+  const els = {
+    tabLogin: document.getElementById("tabLogin"),
+    tabReg: document.getElementById("tabRegister"),
+    regFields: document.getElementById("regFields"),
+    btn: document.getElementById("submitBtn"),
+    msg: document.getElementById("msg")
+  };
+
+  window.switchMode = (m) => {
+    mode = m;
+    els.tabLogin.className = m==='login' ? 'tab active' : 'tab';
+    els.tabReg.className = m==='register' ? 'tab active' : 'tab';
+    els.regFields.style.display = m==='register' ? 'block' : 'none';
+    els.btn.innerText = m==='register' ? 'Create Account' : 'Login';
+    els.msg.innerText = "";
+  };
+
+  window.handleSubmit = async () => {
+    const mobile = document.getElementById("cMobile").value.trim();
+    const pass = document.getElementById("cPass").value.trim();
+    
+    if(!mobile || !pass) return els.msg.innerText = "All fields required";
+    
+    els.btn.disabled = true; els.btn.innerText = "Processing...";
+
+    try {
+      if(mode === 'register') {
+        const name = document.getElementById("cName").value.trim();
+        if(!name) throw "Name required";
+
+        const q = query(collection(db, "users"), where("mobile", "==", mobile));
+        const snap = await getDocs(q);
+        if(!snap.empty) throw "Mobile already registered! Please Login.";
+
+        await addDoc(collection(db, "users"), {
+           name, mobile, password: pass, 
+           joined: new Date().toISOString(), role: "customer"
+        });
+        
+        saveAndRedirect(name, mobile, "");
+
+      } else {
+        const q = query(collection(db, "users"), where("mobile", "==", mobile), where("password", "==", pass));
+        const snap = await getDocs(q);
+        if(snap.empty) throw "Invalid Mobile or Password";
+        
+        const d = snap.docs[0].data();
+        saveAndRedirect(d.name, d.mobile, d.address || "");
+      }
+    } catch(e) {
+      els.msg.innerText = typeof e === 'string' ? e : "Error occurred";
+      els.btn.disabled = false; els.btn.innerText = mode==='login'?'Login':'Create Account';
+    }
+  };
+
+  window.guestMode = () => {
+    localStorage.removeItem("sanghx_user");
+    localStorage.setItem("sanghx_role", "customer");
+    location.href = "customer.html";
+  };
+
+  function saveAndRedirect(name, mobile, address) {
+    localStorage.setItem("sanghx_user", JSON.stringify({ name, mobile, address }));
+    localStorage.setItem("sanghx_role", "customer");
+    location.href = "customer.html";
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SANGHX • Merchant</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+  <style>
+    body { background: #111; font-family: 'Outfit', sans-serif; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; padding: 20px; }
+    .card { background: #1E1E1E; width: 100%; max-width: 360px; padding: 30px; border-radius: 24px; border: 1px solid #333; }
+    h1 { font-size: 24px; margin-bottom: 5px; background: linear-gradient(to right, #FF9966, #FF5E62); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    p { color: #888; font-size: 14px; margin-bottom: 25px; }
+    
+    .tabs { display: flex; background: #000; padding: 5px; border-radius: 12px; margin-bottom: 20px; }
+    .tab { flex: 1; padding: 10px; text-align: center; border-radius: 8px; font-weight: 700; font-size: 14px; cursor: pointer; transition: 0.3s; color: #666; }
+    .tab.active { background: #333; color: white; }
+
+    input { width: 100%; padding: 15px; background: #111; border: 1px solid #333; border-radius: 12px; color: white; margin-bottom: 12px; outline: none; font-size: 15px; }
+    input:focus { border-color: #FF5E62; }
+    
+    .btn { width: 100%; padding: 16px; background: linear-gradient(to right, #FF9966, #FF5E62); color: white; border: none; border-radius: 12px; font-weight: 800; font-size: 16px; cursor: pointer; margin-top: 10px; }
+    .btn:active { transform: scale(0.98); }
+    .err { color: #FF4B3A; font-size: 13px; margin-bottom: 10px; text-align: center; min-height: 20px; }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h1>Partner Dashboard 🏪</h1>
+    <p>Manage your restaurant & menu.</p>
+    
+    <div class="tabs">
+      <div class="tab active" onclick="switchMode('login')" id="tabLogin">Login</div>
+      <div class="tab" onclick="switchMode('register')" id="tabRegister">Register Shop</div>
+    </div>
+
+    <div class="err" id="msg"></div>
+
+    <form onsubmit="event.preventDefault(); handleSubmit();">
+      <div id="regFields" style="display:none;">
+        <input type="text" id="sName" placeholder="Restaurant Name (e.g. Biryani House)">
+        <input type="text" id="sOwner" placeholder="Owner Name">
+      </div>
+      
+      <input type="tel" id="sMobile" placeholder="Mobile Number" required>
+      <input type="password" id="sPass" placeholder="Password" required>
+      <button class="btn" id="submitBtn">Login to Dashboard</button>
+    </form>
+  </div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  const app = initializeApp({ apiKey: "AIzaSyCuVtOv09ixwnZszRKxjq3PQtiDn3kE5ng", projectId: "tabey-foods" });
+  const db = getFirestore(app);
+
+  let mode = "login";
+  const els = {
+    tabLogin: document.getElementById("tabLogin"),
+    tabReg: document.getElementById("tabRegister"),
+    regFields: document.getElementById("regFields"),
+    btn: document.getElementById("submitBtn"),
+    msg: document.getElementById("msg")
+  };
+
+  window.switchMode = (m) => {
+    mode = m;
+    els.tabLogin.className = m==='login' ? 'tab active' : 'tab';
+    els.tabReg.className = m==='register' ? 'tab active' : 'tab';
+    els.regFields.style.display = m==='register' ? 'block' : 'none';
+    els.btn.innerText = m==='register' ? 'Create Store' : 'Login to Dashboard';
+    els.msg.innerText = "";
+  };
+
+  window.handleSubmit = async () => {
+    const mobile = document.getElementById("sMobile").value.trim();
+    const pass = document.getElementById("sPass").value.trim();
+    
+    if(!mobile || !pass) return els.msg.innerText = "All fields required";
+    
+    els.btn.disabled = true; els.btn.innerText = "Processing...";
+
+    try {
+      if(mode === 'register') {
+        const name = document.getElementById("sName").value.trim();
+        const owner = document.getElementById("sOwner").value.trim();
+        if(!name) throw "Shop Name required";
+
+        // Check exist
+        const q = query(collection(db, "stores"), where("mobile", "==", mobile));
+        const snap = await getDocs(q);
+        if(!snap.empty) throw "Mobile already registered!";
+
+        // Create Store
+        const docRef = await addDoc(collection(db, "stores"), {
+           name, mobile, password: pass, owner,
+           isOnline: true, openTime: "10:00 AM", closeTime: "11:00 PM",
+           joined: new Date().toISOString()
+        });
+        
+        localStorage.setItem("vendor_user", JSON.stringify({ id: docRef.id, name, mobile }));
+        location.href = "vendor.html";
+
+      } else {
+        // Login
+        const q = query(collection(db, "stores"), where("mobile", "==", mobile), where("password", "==", pass));
+        const snap = await getDocs(q);
+        if(snap.empty) throw "Invalid Credentials";
+        
+        const d = snap.docs[0].data();
+        localStorage.setItem("vendor_user", JSON.stringify({ id: snap.docs[0].id, ...d }));
+        location.href = "vendor.html";
+      }
+    } catch(e) {
+      els.msg.innerText = typeof e === 'string' ? e : "Error occurred";
+      els.btn.disabled = false; els.btn.innerText = mode==='login'?'Login':'Create Store';
+    }
+  };
+</script>
+</body>
+</html>

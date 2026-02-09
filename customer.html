@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>SANGHX • Gourmet</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg: #FAFAFA; --card: #FFFFFF; --text: #18181B; --text-muted: #71717A;
+    --border: #E4E4E7; --primary: #F43F5E; --accent: #10B981; --surface: #F4F4F5;
+  }
+  .dark {
+    --bg: #09090B; --card: #18181B; --text: #FAFAFA; --text-muted: #A1A1AA;
+    --border: #27272A; --surface: #27272A;
+  }
+  body {
+    background-color: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif;
+    -webkit-tap-highlight-color: transparent; transition: background-color 0.4s ease, color 0.4s ease;
+  }
+  
+  /* Utilities */
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  
+  .glass {
+    background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+  }
+  .dark .glass {
+    background: rgba(24, 24, 27, 0.8); border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+
+  /* Custom Toggle */
+  .toggle-checkbox { display: none; }
+  .toggle-label {
+    width: 44px; height: 24px; background: var(--surface); border-radius: 99px; position: relative; cursor: pointer; transition: 0.3s;
+    border: 1px solid var(--border); display: block;
+  }
+  .toggle-label::after {
+    content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; background: var(--text-muted); border-radius: 50%; transition: 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+  }
+  .toggle-checkbox:checked + .toggle-label { background: var(--surface); border-color: var(--accent); }
+  .toggle-checkbox:checked + .toggle-label::after { transform: translateX(20px); background: var(--accent); }
+
+  /* Animations */
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .animate-fade-up { animation: fadeUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+  /* Custom Radio */
+  .custom-radio input { display: none; }
+  .custom-radio label {
+    display: block; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border);
+    font-size: 11px; cursor: pointer; transition: all 0.2s; background: var(--bg); color: var(--text-muted);
+  }
+  .custom-radio input:checked + label {
+    background: var(--text); color: var(--bg); border-color: var(--text);
+  }
+
+  .toast {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px);
+    background: var(--card); color: var(--text); padding: 10px 20px; border-radius: 99px;
+    font-weight: 500; font-size: 13px; opacity: 0; pointer-events: none; 
+    transition: 0.5s cubic-bezier(0.19, 1, 0.22, 1); z-index: 100;
+    display: flex; align-items: center; gap: 10px; box-shadow: 0 10px 40px -10px rgba(0,0,0,0.2);
+    border: 1px solid var(--border);
+  }
+  .toast.show { transform: translateX(-50%) translateY(40px); opacity: 1; }
+  
+  /* View Sections */
+  .view-section { display: none; } .view-section.active { display: block; }
+</style>
+</head>
+<body class="antialiased pb-28 selection:bg-rose-500 selection:text-white">
+
+  <header class="glass fixed top-0 w-full z-50 px-6 py-4 flex justify-between items-center transition-all duration-300 shadow-sm">
+    <div class="font-bold text-lg tracking-tight flex items-center gap-2 group cursor-pointer">
+      <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-rose-500 to-orange-400 flex items-center justify-center text-white shadow-lg shadow-rose-500/20">
+        <iconify-icon icon="solar:chef-hat-heart-linear" class="text-base"></iconify-icon>
+      </div>
+      <span class="text-[var(--text)]">SANGHX</span>
+    </div>
+    <div class="flex gap-3 items-center">
+      <button id="themeToggle" class="w-9 h-9 rounded-full border border-[var(--border)] flex items-center justify-center text-[var(--text)] hover:bg-[var(--surface)] transition-colors active:scale-90">
+        <iconify-icon icon="solar:moon-stars-linear" class="text-lg"></iconify-icon>
+      </button>
+      <div class="w-9 h-9 rounded-full overflow-hidden border border-[var(--border)] cursor-pointer active:scale-95 transition-transform" onclick="switchTab('profile')">
+        <img id="userAvatar" src="https://ui-avatars.com/api/?name=Guest&background=random&color=fff" class="w-full h-full object-cover">
+      </div>
+    </div>
+  </header>
+
+  <div class="max-w-xl mx-auto px-5 pt-24">
+    
+    <div id="view-home" class="view-section active">
+      <div class="mb-6 animate-fade-up">
+        <h1 class="text-3xl font-light text-[var(--text)]">Delicious <br><span class="font-semibold">Food for you</span></h1>
+      </div>
+
+      <div class="sticky top-[72px] z-40 bg-[var(--bg)]/95 backdrop-blur-sm pb-2 -mx-5 px-5 transition-colors duration-300">
+        <div class="relative group mb-5">
+          <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <iconify-icon icon="solar:magnifer-linear" class="text-lg text-[var(--text-muted)] group-focus-within:text-[var(--primary)] transition-colors"></iconify-icon>
+          </div>
+          <input type="text" id="searchInput" placeholder="Search for sushi, burger..." 
+            class="block w-full pl-11 pr-4 py-4 rounded-2xl bg-[var(--surface)] text-[var(--text)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--border)] focus:bg-[var(--card)] transition-all duration-300 text-sm font-normal shadow-sm appearance-none">
+        </div>
+        <div class="flex gap-4 overflow-x-auto no-scrollbar pb-2" id="categoryChips"></div>
+      </div>
+
+      <div class="flex justify-between items-center py-4 border-b border-[var(--border)] mb-6 animate-fade-up" style="animation-delay: 0.1s;">
+        <div class="flex items-center gap-2">
+          <iconify-icon icon="solar:leaf-linear" class="text-green-500 text-lg"></iconify-icon>
+          <span class="text-sm font-medium text-[var(--text)]">Pure Veg Mode</span>
+        </div>
+        <div class="flex items-center">
+          <input type="checkbox" id="vegToggle" class="toggle-checkbox">
+          <label for="vegToggle" class="toggle-label"></label>
+        </div>
+      </div>
+
+      <div id="storesList" class="flex flex-col gap-8 min-h-[400px]">
+        <div class="space-y-4">
+           <div class="h-6 w-32 bg-[var(--surface)] rounded animate-pulse"></div>
+           <div class="flex gap-4 overflow-hidden">
+              <div class="min-w-[240px] h-64 bg-[var(--surface)] rounded-3xl animate-pulse"></div>
+              <div class="min-w-[240px] h-64 bg-[var(--surface)] rounded-3xl animate-pulse"></div>
+           </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="view-profile" class="view-section animate-fade-up">
+      <h2 class="text-2xl font-bold mb-6 text-[var(--text)]">My Profile</h2>
+      <div class="bg-[var(--card)] p-5 rounded-3xl border border-[var(--border)] flex items-center gap-4 mb-6 shadow-sm">
+        <img id="profileAvatar" src="" class="w-16 h-16 rounded-full bg-gray-200">
+        <div>
+          <h3 class="font-bold text-lg text-[var(--text)]" id="pName">...</h3>
+          <p class="text-[var(--text-muted)] text-sm" id="pMobile">...</p>
+        </div>
+      </div>
+      <h3 class="font-bold text-lg mb-4 text-[var(--text)]">Past Orders</h3>
+      <div id="orderHistory" class="space-y-4 mb-8 text-sm text-[var(--text-muted)]">Loading...</div>
+      <button onclick="logout()" class="w-full py-4 rounded-2xl bg-red-50 text-red-500 font-bold border border-red-100 hover:bg-red-100 transition-colors">Logout</button>
+    </div>
+
+  </div>
+
+  <div class="fixed bottom-0 left-0 w-full z-50 glass border-t border-[var(--border)] pb-safe">
+    <div class="max-w-xl mx-auto flex justify-around items-center px-2 py-3">
+      <button onclick="switchTab('home')" class="flex flex-col items-center gap-1 p-2 text-[var(--primary)] transition-colors nav-btn" id="nav-home">
+        <iconify-icon icon="solar:home-smile-bold" class="text-2xl"></iconify-icon>
+        <span class="text-[10px] font-medium">Home</span>
+      </button>
+      <button onclick="switchTab('profile')" class="flex flex-col items-center gap-1 p-2 text-[var(--text-muted)] hover:text-[var(--text)] transition-colors nav-btn" id="nav-profile">
+        <iconify-icon icon="solar:user-circle-linear" class="text-2xl"></iconify-icon>
+        <span class="text-[10px] font-medium">Profile</span>
+      </button>
+      
+      <div class="relative -top-8">
+        <button id="cartFab" onclick="toggleCart()" class="w-16 h-16 bg-[var(--text)] text-[var(--bg)] rounded-full shadow-2xl flex items-center justify-center transform transition-all duration-300 hover:scale-105 active:scale-95 group">
+          <iconify-icon icon="solar:bag-3-bold" class="text-2xl group-hover:animate-bounce"></iconify-icon>
+          <span id="cartCount" class="absolute top-0 right-0 bg-rose-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-[var(--bg)] scale-0 transition-transform duration-300">0</span>
+        </button>
+      </div>
+
+      <button class="flex flex-col items-center gap-1 p-2 text-[var(--text-muted)] hover:text-[var(--text)] transition-colors">
+        <iconify-icon icon="solar:bill-list-linear" class="text-2xl"></iconify-icon>
+        <span class="text-[10px] font-medium">Orders</span>
+      </button>
+      <button onclick="toggleAi()" class="flex flex-col items-center gap-1 p-2 text-[var(--text-muted)] hover:text-indigo-500 transition-colors">
+        <iconify-icon icon="solar:magic-stick-3-linear" class="text-2xl"></iconify-icon>
+        <span class="text-[10px] font-medium">AI Chef</span>
+      </button>
+    </div>
+  </div>
+
+  <div id="cartModal" class="fixed inset-0 z-[60] hidden">
+    <div class="absolute inset-0 bg-black/20 backdrop-blur-sm transition-opacity duration-300 opacity-0" id="cartOverlay" onclick="toggleCart()"></div>
+    <div class="absolute bottom-0 left-0 w-full bg-[var(--card)] rounded-t-[32px] p-0 flex flex-col shadow-2xl transition-transform duration-300 transform translate-y-full max-h-[90vh]" id="cartPanel">
+      <div class="w-full flex justify-center pt-3 pb-1" onclick="toggleCart()">
+        <div class="w-12 h-1 bg-[var(--border)] rounded-full"></div>
+      </div>
+      <div class="px-6 py-4 flex justify-between items-center border-b border-[var(--border)]">
+        <h2 class="text-lg font-semibold tracking-tight text-[var(--text)]">Current Order</h2>
+        <span class="text-xs text-red-500 font-bold cursor-pointer" onclick="clearCart()">Clear All</span>
+      </div>
+      <div id="cartItems" class="flex-1 overflow-y-auto no-scrollbar p-6 space-y-4"></div>
+      <div class="p-6 bg-[var(--surface)] border-t border-[var(--border)] pb-8">
+        <div class="flex justify-between text-sm text-[var(--text-muted)] mb-2"><span>Subtotal</span><span id="subTotal">₹0</span></div>
+        <div class="flex justify-between text-base font-semibold text-[var(--text)] mb-6"><span>Total to Pay</span><span id="grandTotal">₹0</span></div>
+        
+        <button id="checkoutBtn" class="w-full bg-[var(--text)] text-[var(--bg)] py-4 rounded-2xl font-semibold text-sm flex justify-center items-center gap-3 shadow-xl active:scale-95 transition-all relative group overflow-hidden">
+          <span class="relative z-10">Proceed to Checkout</span>
+          <iconify-icon icon="solar:arrow-right-linear" class="relative z-10 text-lg group-hover:translate-x-1 transition-transform"></iconify-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="aiModal" class="fixed inset-0 z-[60] hidden flex items-end sm:items-center justify-center pointer-events-none">
+    <div class="absolute inset-0 bg-black/10 backdrop-blur-[2px] pointer-events-auto opacity-0 transition-opacity duration-300" id="aiOverlay" onclick="toggleAi()"></div>
+    <div id="aiPanel" class="bg-[var(--card)] w-full sm:w-[400px] sm:rounded-3xl rounded-t-3xl p-6 pointer-events-auto transform translate-y-full transition-transform duration-300 border border-[var(--border)] shadow-2xl relative">
+      <div class="absolute -top-12 left-1/2 -translate-x-1/2 w-10 h-10 bg-[var(--card)] rounded-full flex items-center justify-center border border-[var(--border)] text-indigo-500 shadow-lg">
+        <iconify-icon icon="solar:stars-minimalistic-bold" class="text-xl animate-spin-slow"></iconify-icon>
+      </div>
+      <h3 class="text-center font-semibold text-lg mb-1 text-[var(--text)]">What are you craving?</h3>
+      <p class="text-center text-xs text-[var(--text-muted)] mb-6">AI suggestions based on your mood.</p>
+      <div class="relative">
+        <input type="text" placeholder="Type your mood..." class="w-full bg-[var(--surface)] border border-[var(--border)] rounded-2xl pl-4 pr-12 py-3 text-sm focus:outline-none focus:border-indigo-500 transition-all text-[var(--text)]">
+        <button class="absolute right-2 top-2 p-1.5 bg-[var(--text)] text-[var(--bg)] rounded-xl flex items-center justify-center hover:scale-105 transition-transform"><iconify-icon icon="solar:plain-2-linear"></iconify-icon></button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast">
+    <div class="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center text-white text-xs"><iconify-icon icon="solar:check-read-linear"></iconify-icon></div>
+    <span id="toastMsg" class="font-normal">Item added</span>
+  </div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, collection, onSnapshot, query, where, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  const app = initializeApp({ apiKey: "AIzaSyCuVtOv09ixwnZszRKxjq3PQtiDn3kE5ng", projectId: "tabey-foods" });
+  const db = getFirestore(app);
+
+  // --- AUTH CHECK ---
+  const user = JSON.parse(localStorage.getItem("tabey_user"));
+  if(!user) location.href = "customer-login.html";
+
+  // Init Profile
+  const avatarUrl = `https://ui-avatars.com/api/?name=${user.name}&background=random&color=fff`;
+  document.getElementById("userAvatar").src = avatarUrl;
+  document.getElementById("profileAvatar").src = avatarUrl;
+  document.getElementById("pName").innerText = user.name;
+  document.getElementById("pMobile").innerText = user.mobile;
+
+  // --- STATE ---
+  let STORES = [], MENU = [], CART = JSON.parse(localStorage.getItem('gourmet_cart')) || [];
+  let FILTER = 'All', SEARCH = '', VEG_ONLY = false;
+
+  // Cleanup bad data
+  if(CART.some(i => i.variant === 'undefined' || !i.variant)) {
+      CART = []; localStorage.setItem('gourmet_cart', JSON.stringify([]));
+  }
+
+  // --- DB LISTENERS ---
+  onSnapshot(collection(db, "stores"), (s)=>{ STORES=[]; s.forEach(d=>STORES.push({id:d.id, ...d.data()})); renderStore(); });
+  onSnapshot(collection(db, "menu"), (s)=>{ MENU=[]; s.forEach(d=>MENU.push({id:d.id, ...d.data()})); renderStore(); });
+
+  const els = {
+    stores: document.getElementById('storesList'),
+    chips: document.getElementById('categoryChips'),
+    search: document.getElementById('searchInput'),
+    veg: document.getElementById('vegToggle'),
+    cartCount: document.getElementById('cartCount'),
+    cartModal: document.getElementById('cartModal'),
+    cartOverlay: document.getElementById('cartOverlay'),
+    cartPanel: document.getElementById('cartPanel'),
+    cartItems: document.getElementById('cartItems'),
+    themeBtn: document.getElementById('themeToggle'),
+    toast: document.getElementById('toast'),
+    checkoutBtn: document.getElementById('checkoutBtn')
+  };
+
+  // --- THEME LOGIC ---
+  const initTheme = () => {
+    if(localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark');
+    updateThemeIcon();
+  };
+  const updateThemeIcon = () => {
+    const isDark = document.documentElement.classList.contains('dark');
+    els.themeBtn.innerHTML = isDark ? '<iconify-icon icon="solar:sun-2-linear" class="text-lg"></iconify-icon>' : '<iconify-icon icon="solar:moon-stars-linear" class="text-lg"></iconify-icon>';
+  };
+  els.themeBtn.onclick = () => {
+    document.documentElement.classList.toggle('dark');
+    localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+    updateThemeIcon();
+  };
+  initTheme();
+
+  // --- RENDER LOGIC ---
+  const CATEGORIES = [ { name: 'All', icon: 'solar:infinity-linear' }, { name: 'Pizza', icon: 'solar:pizza-linear' }, { name: 'Burger', icon: 'solar:hamburger-menu-linear' }, { name: 'Asian', icon: 'solar:bowl-chopsticks-linear' }, { name: 'Healthy', icon: 'solar:leaf-linear' }, { name: 'Dessert', icon: 'solar:donut-linear' } ];
+
+  const renderChips = () => {
+    els.chips.innerHTML = CATEGORIES.map(c => {
+      const active = FILTER === c.name;
+      return `<button onclick="setCat('${c.name}')" class="flex flex-col items-center gap-2 min-w-[64px] group flex-shrink-0"><div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl transition-all duration-300 ${active ? 'bg-[var(--text)] text-[var(--bg)] shadow-lg scale-105' : 'bg-[var(--surface)] text-[var(--text-muted)] border border-[var(--border)] group-hover:border-[var(--text)]'}"><iconify-icon icon="${c.icon}"></iconify-icon></div><span class="text-[10px] font-medium tracking-wide ${active ? 'text-[var(--text)]' : 'text-[var(--text-muted)]'}">${c.name}</span></button>`
+    }).join('');
+  };
+  window.setCat = (c) => { FILTER = c; renderStore(); renderChips(); };
+
+  const renderStore = () => {
+    els.stores.innerHTML = '';
+    const sortedStores = [...STORES].sort((a,b) => (b.isOnline?1:0) - (a.isOnline?1:0));
+
+    sortedStores.forEach((store) => {
+      let items = MENU.filter(m => m.storeName === store.name);
+      
+      if (SEARCH) items = items.filter(i => i.name.toLowerCase().includes(SEARCH.toLowerCase()) || store.name.toLowerCase().includes(SEARCH.toLowerCase()));
+      if (FILTER !== 'All') items = items.filter(i => i.category === FILTER || (FILTER==='Asian' && i.category==='Chinese'));
+      if (VEG_ONLY) items = items.filter(i => i.isVeg || (i.name && i.name.toLowerCase().includes('veg') && !i.name.toLowerCase().includes('non')));
+
+      if (items.length === 0) return;
+
+      const section = document.createElement('div');
+      section.className = `store-section animate-fade-up ${!store.isOnline ? 'opacity-60 grayscale pointer-events-none' : ''}`;
+      
+      let itemsHtml = items.map(item => {
+        const variants = item.variants || [{label: 'Regular', price: item.price}];
+        const uid = Math.random().toString(36).substr(2, 9);
+        const imgUrl = item.img || 'https://via.placeholder.com/300x200?text=Food';
+        
+        const variantHtml = variants.length > 1 ? `
+          <div class="flex gap-2 mt-3 overflow-x-auto no-scrollbar pb-1" id="var-group-${uid}">
+            ${variants.map((v, idx) => `<div class="custom-radio"><input type="radio" id="radio-${uid}-${idx}" name="var-${uid}" value="${v.label}|${v.price}" ${idx===0?'checked':''} onchange="document.getElementById('price-${uid}').innerText='${v.price}'"><label for="radio-${uid}-${idx}">${v.label}</label></div>`).join('')}
+          </div>` : `<div class="h-2 mt-3"></div>`;
+
+        return `
+          <div class="min-w-[260px] max-w-[260px] bg-[var(--card)] p-4 rounded-[32px] border border-[var(--border)] shadow-sm flex flex-col snap-start relative group hover:border-[var(--text-muted)] transition-colors duration-300">
+             <div class="h-40 w-full rounded-[24px] overflow-hidden mb-4 relative bg-gray-100">
+               <img src="${imgUrl}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" loading="lazy">
+             </div>
+             <div class="flex-1 flex flex-col">
+               <h4 class="font-semibold text-[var(--text)] text-base leading-tight line-clamp-2">${item.name}</h4>
+               ${variantHtml}
+               <div class="mt-auto pt-4 flex justify-between items-end">
+                 <div>
+                   <span class="text-[10px] text-[var(--text-muted)] uppercase tracking-wider font-semibold">Price</span>
+                   <div class="font-bold text-xl text-[var(--text)] tracking-tight">₹<span id="price-${uid}">${variants[0].price}</span></div>
+                 </div>
+                 <button onclick="addToCart('${item.id}', '${item.name}', '${store.name}', '${uid}', ${variants.length > 1})" 
+                   class="w-10 h-10 rounded-full bg-[var(--text)] text-[var(--bg)] flex items-center justify-center text-lg shadow-lg active:scale-90 transition-all cursor-pointer"><iconify-icon icon="solar:add-circle-linear"></iconify-icon>
+                 </button>
+               </div>
+             </div>
+          </div>`;
+      }).join('');
+
+      section.innerHTML = `
+        <div class="flex justify-between items-center mb-5 px-1">
+          <div class="flex items-center gap-3">
+             <div class="w-10 h-10 rounded-xl bg-[var(--surface)] flex items-center justify-center text-xl text-[var(--text)] border border-[var(--border)]"><iconify-icon icon="solar:shop-2-linear"></iconify-icon></div>
+             <div><h3 class="font-bold text-lg text-[var(--text)] tracking-tight">${store.name}</h3><div class="flex items-center gap-1 text-xs text-[var(--text-muted)]"><iconify-icon icon="solar:clock-circle-linear"></iconify-icon> 25-30 min</div></div>
+          </div>
+          <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide border ${store.isOnline ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-rose-50 text-rose-600 border-rose-100'}">${store.isOnline ? 'Open' : 'Closed'}</span>
+        </div>
+        <div class="flex gap-4 overflow-x-auto no-scrollbar pb-6 snap-x px-1">${itemsHtml}</div>`;
+      els.stores.appendChild(section);
+    });
+  };
+
+  // --- CART ---
+  window.addToCart = (id, name, store, uid, hasVariants) => {
+    let variant = 'Standard', price = 0;
+    if(hasVariants) {
+      const radios = document.getElementsByName(`var-${uid}`);
+      for(let r of radios) { if(r.checked) { [variant, price] = r.value.split('|'); break; } }
+    } else { price = document.getElementById(`price-${uid}`).innerText; }
+
+    const key = `${id}-${variant}`;
+    const exist = CART.find(x => x.key === key);
+    if(exist) exist.qty++;
+    else CART.push({ key, id, name, store, variant, price: parseInt(price), qty: 1 });
+    updateCart();
+    showToast(`Added ${name}`);
+  };
+
+  window.updateQty = (key, delta) => {
+    const idx = CART.findIndex(x => x.key === key);
+    if(idx > -1) { CART[idx].qty += delta; if(CART[idx].qty <= 0) CART.splice(idx, 1); updateCart(); }
+  };
+
+  window.clearCart = () => { 
+    CART = []; 
+    localStorage.removeItem('gourmet_cart'); // Force clear storage
+    updateCart(); 
+    toggleCart(); 
+  };
+
+  const updateCart = () => {
+    localStorage.setItem('gourmet_cart', JSON.stringify(CART));
+    const count = CART.reduce((a,b)=>a+b.qty, 0);
+    if(count > 0) { els.cartCount.innerText = count; els.cartCount.classList.remove('scale-0'); } else { els.cartCount.classList.add('scale-0'); }
+
+    if(CART.length === 0) {
+      els.cartItems.innerHTML = `<div class="flex flex-col items-center justify-center h-48 text-[var(--text-muted)]"><span class="text-sm">Your cart is empty</span></div>`;
+      document.getElementById('subTotal').innerText = '₹0';
+      document.getElementById('grandTotal').innerText = '₹0';
+    } else {
+      els.cartItems.innerHTML = CART.map(item => `
+        <div class="flex justify-between items-center bg-[var(--surface)] p-3 rounded-2xl border border-[var(--border)] animate-fade-up">
+          <div class="flex items-center gap-3">
+             <div class="w-10 h-10 rounded-xl bg-[var(--card)] border border-[var(--border)] flex items-center justify-center text-[var(--text-muted)]"><iconify-icon icon="solar:dish-2-linear"></iconify-icon></div>
+             <div><div class="font-semibold text-sm text-[var(--text)] line-clamp-1">${item.name}</div><div class="text-[10px] text-[var(--text-muted)] font-medium">${item.variant} • ₹${item.price}</div></div>
+          </div>
+          <div class="flex items-center gap-3 bg-[var(--card)] px-2 py-1.5 rounded-xl border border-[var(--border)] shadow-sm">
+            <button onclick="updateQty('${item.key}', -1)" class="w-5 h-5 flex items-center justify-center hover:text-red-500 transition-colors"><iconify-icon icon="solar:minus-circle-linear"></iconify-icon></button>
+            <span class="text-xs font-bold w-3 text-center">${item.qty}</span>
+            <button onclick="updateQty('${item.key}', 1)" class="w-5 h-5 flex items-center justify-center hover:text-green-500 transition-colors"><iconify-icon icon="solar:add-circle-linear"></iconify-icon></button>
+          </div>
+        </div>`).join('');
+      const sub = CART.reduce((a,b)=>a+(b.price*b.qty), 0);
+      document.getElementById('subTotal').innerText = '₹' + sub;
+      document.getElementById('grandTotal').innerText = '₹' + sub;
+    }
+  };
+
+  // --- UTILS ---
+  window.toggleCart = () => {
+    const modal = els.cartModal, panel = els.cartPanel, overlay = els.cartOverlay;
+    if(modal.classList.contains('hidden')) { modal.classList.remove('hidden'); setTimeout(() => { overlay.classList.remove('opacity-0'); panel.classList.remove('translate-y-full'); }, 10); } else { overlay.classList.add('opacity-0'); panel.classList.add('translate-y-full'); setTimeout(() => modal.classList.add('hidden'), 300); }
+  };
+
+  window.toggleAi = () => {
+    const m = document.getElementById('aiModal'), o = document.getElementById('aiOverlay'), p = document.getElementById('aiPanel');
+    if(m.classList.contains('hidden')) { m.classList.remove('hidden'); setTimeout(() => { o.classList.remove('opacity-0'); p.classList.remove('translate-y-full'); }, 10); } else { o.classList.add('opacity-0'); p.classList.add('translate-y-full'); setTimeout(() => m.classList.add('hidden'), 300); }
+  };
+
+  window.switchTab = (t) => {
+    document.querySelectorAll('.view-section').forEach(e=>e.classList.remove('active'));
+    document.getElementById(`view-${t}`).classList.add('active');
+    
+    // Nav Icons
+    const navs = document.querySelectorAll('.nav-btn');
+    navs.forEach(n => { n.classList.remove('text-[var(--primary)]'); n.classList.add('text-[var(--text-muted)]'); });
+    
+    // Highlight Active
+    if(t === 'home') document.querySelector('button[onclick="switchTab(\'home\')"]').classList.add('text-[var(--primary)]');
+    if(t === 'profile') document.querySelector('button[onclick="switchTab(\'profile\')"]').classList.add('text-[var(--primary)]');
+
+    if(t === 'profile') loadHistory();
+  };
+
+  const loadHistory = async () => {
+    const q = query(collection(db, "orders"), where("customer.mobile", "==", user.mobile), orderBy("timestamp", "desc"), limit(5));
+    const snap = await getDocs(q);
+    const box = document.getElementById("orderHistory");
+    if(snap.empty) { box.innerHTML = "No past orders."; return; }
+    box.innerHTML = "";
+    snap.forEach(d => {
+        const o = d.data();
+        box.innerHTML += `<div class="p-3 bg-[var(--surface)] rounded-xl border border-[var(--border)] flex justify-between items-center text-[var(--text)]"><div><div class="font-bold">₹${o.bill.total}</div><div class="text-xs text-[var(--text-muted)]">${new Date(o.timestamp.seconds*1000).toLocaleDateString()}</div></div><span class="text-xs font-bold ${o.status==='Completed'?'text-emerald-500':'text-orange-500'}">${o.status}</span></div>`;
+    });
+  };
+
+  window.logout = () => { localStorage.removeItem("sanghx_user"); location.href = "customer-login.html"; };
+
+  const showToast = (msg) => {
+    const t = els.toast;
+    t.querySelector('span').innerText = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  };
+
+  // Event Listeners
+  els.search.addEventListener('input', (e) => { SEARCH = e.target.value; renderStore(); });
+  els.veg.addEventListener('change', (e) => { VEG_ONLY = e.target.checked; renderStore(); });
+  els.checkoutBtn.onclick = () => { if(CART.length>0) window.location.href="checkout.html"; };
+
+  renderChips(); updateCart();
+</script>
+</body>
+</html>
