@@ -3,347 +3,311 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>TABEY • Enhanced Admin</title>
+  <title>TABEY • Admin Panel</title>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/theme.css">
-
+  
   <style>
-    :root { --primary: #4F46E5; --primary-light: #818CF8; --success: #10B981; --danger: #EF4444; --warning: #F59E0B; --dark: #111827; --light: #F9FAFB; --white: #ffffff; --sidebar-width: 260px; }
-    * { margin:0; padding:0; box-sizing:border-box; font-family:'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color:transparent; }
-    body { background: var(--light); color: var(--dark); display: flex; min-height: 100vh; overflow-x: hidden; transition: background 0.3s; }
+    :root { --primary: #4F46E5; --light: #F9FAFB; --dark: #111827; --white: #ffffff; --sidebar-width: 260px; }
+    * { margin:0; padding:0; box-sizing:border-box; font-family:'Plus Jakarta Sans', sans-serif; }
+    body { background: var(--light); color: var(--dark); display: flex; min-height: 100vh; }
 
-    /* Sidebar polish */
-    .sidebar { width: var(--sidebar-width); background: var(--white); position: fixed; height: 100%; top: 0; left: 0; border-right: 1px solid #e5e7eb; padding: 20px; z-index: 1000; transform: translateX(0); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); display:flex; flex-direction:column; }
-    .sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 999; opacity: 0; visibility: hidden; transition: 0.3s; }
-    .sidebar-overlay.show { opacity: 1; visibility: visible; }
-    .logo { font-size: 20px; font-weight: 800; color: var(--primary); margin-bottom: 22px; display: flex; align-items: center; gap: 10px; }
-    .nav-item { display: flex; align-items: center; gap: 12px; padding: 14px 15px; color: #6B7280; font-weight: 600; border-radius: 12px; cursor: pointer; transition: 0.2s; margin-bottom: 5px; }
-    .nav-item:hover, .nav-item.active { background: #EEF2FF; color: var(--primary); }
+    /* Sidebar */
+    .sidebar { width: var(--sidebar-width); background: var(--white); position: fixed; height: 100%; border-right: 1px solid #e5e7eb; padding: 20px; z-index: 1000; display:flex; flex-direction:column; transition: transform 0.3s; }
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 14px; color: #6B7280; font-weight: 600; border-radius: 12px; cursor: pointer; margin-bottom: 5px; }
+    .nav-item.active { background: #EEF2FF; color: var(--primary); }
     
-    .main { margin-left: var(--sidebar-width); flex: 1; padding: 20px; width: calc(100% - var(--sidebar-width)); transition: 0.3s; }
-    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; position: sticky; top: 0; background: var(--light); z-index: 90; padding: 10px 0; }
-    .menu-toggle { display: none; font-size: 28px; cursor: pointer; color: var(--dark); }
-    .page-title { font-size: 22px; font-weight: 800; }
+    /* Main Content */
+    .main { margin-left: var(--sidebar-width); flex: 1; padding: 20px; transition: 0.3s; }
+    .section { display: none; } .section.active { display: block; }
     
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 25px; }
-    .stat-card { background: var(--white); padding: 16px; border-radius: 16px; box-shadow: 0 2px 5px rgba(0,0,0,0.03); }
-    .stat-val { font-size: 24px; font-weight: 800; margin-top: 4px; }
-    .stat-label { font-size: 11px; color: #9CA3AF; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
-    
-    .section { display: none; animation: fadeIn 0.3s ease; }
-    .section.active { display: block; }
-    @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+    /* Cards */
+    .draggable-item { background: var(--white); padding: 16px; border-radius: 16px; margin-bottom: 12px; border: 2px solid #f3f4f6; display: flex; align-items: center; gap: 12px; }
+    .item-img { width: 60px; height: 60px; border-radius: 10px; object-fit: cover; background: #eee; }
+    .item-info { flex: 1; }
+    .btn-icon { width: 36px; height: 36px; border-radius: 8px; border:none; cursor:pointer; font-size:18px; display:flex; justify-content:center; align-items:center; }
 
-    /* Orders */
-    .orders-grid { display: flex; flex-direction: column; gap: 15px; padding-bottom: 80px; }
-    .order-card { background: var(--white); border-radius: 16px; padding: 16px; border: 1px solid #f3f4f6; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
-    .order-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px dashed #e5e7eb; }
-    .cust-name { font-weight: 700; font-size: 16px; color: var(--dark); }
-    .order-time { font-size: 11px; color: #9CA3AF; font-weight: 500; }
-    .order-items { margin: 10px 0; font-size: 13px; color: #4B5563; }
-    .order-item-row { display: flex; justify-content: space-between; margin-bottom: 6px; }
-    .order-total { display: flex; justify-content: space-between; font-weight: 800; margin-top: 12px; padding-top: 10px; border-top: 1px solid #f3f4f6; font-size: 15px; }
-    .status-badge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: 700; text-transform: uppercase; margin-top: 5px; }
-    .st-Pending { background: #FFF7ED; color: #C2410C; border: 1px solid #FED7AA; }
-    .st-Confirmed { background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; }
-    .st-Completed { background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0; }
-    .st-Cancelled { background: #FEF2F2; color: #B91C1C; border: 1px solid #FECACA; }
-
-    .action-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 15px; }
-    .act-btn { padding: 10px; border: none; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s; display: flex; justify-content: center; align-items: center; gap: 5px; }
-    .btn-accept { background: var(--primary); color: white; }
-    .btn-complete { background: var(--success); color: white; }
-    .btn-del { background: #FEF2F2; color: #DC2626; border: 1px solid #FEE2E2; }
-
-    .draggable-item { background: var(--white); padding: 16px; border-radius: 16px; margin-bottom: 12px; border: 2px solid #f3f4f6; cursor: grab; transition: all 0.2s; display: flex; align-items: center; gap: 12px; }
-    .draggable-item:active { cursor: grabbing; }
-    .draggable-item.dragging { opacity: 0.5; transform: scale(0.98); }
-    .item-img { width: 70px; height: 70px; border-radius: 12px; object-fit: cover; background: #f3f4f6; flex-shrink: 0; }
-    .item-info { flex: 1; min-width: 0; }
-    .item-title { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
-    .item-sub { font-size: 12px; color: #6B7280; margin-bottom: 2px; }
-    .item-actions { display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; }
-    .btn-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; justify-content: center; align-items: center; border: none; font-size: 18px; cursor: pointer; transition: 0.2s; }
-
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 2000; display: none; align-items: flex-end; justify-content: center; backdrop-filter: blur(3px); }
+    /* Modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
     .modal-overlay.open { display: flex; }
-    .modal-box { background: white; width: 100%; max-width: 100%; padding: 25px 20px; border-radius: 20px 20px 0 0; animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); max-height: 85vh; overflow-y: auto; }
-    @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
-    input, select { width: 100%; padding: 14px; margin-bottom: 12px; border: 1px solid #e5e7eb; border-radius: 12px; outline: none; font-size: 14px; background: #F9FAFB; }
-    .btn-primary { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 700; font-size: 15px; cursor: pointer; }
-    .btn-ghost { background: transparent; color: #666; margin-top: 10px; border: 1px solid #e5e7eb; }
-    .fab { position: fixed; bottom: 20px; right: 20px; width: 56px; height: 56px; background: var(--dark); color: white; border-radius: 16px; display: none; justify-content: center; align-items: center; font-size: 28px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 90; cursor: pointer; border: none; }
-    .reorder-mode-banner { background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: white; padding: 12px 16px; border-radius: 12px; margin-bottom: 16px; display: none; align-items: center; justify-content: space-between; font-weight: 600; }
-    .reorder-mode-banner.active { display: flex; }
-
-    @media(max-width: 768px) {
-      .sidebar { transform: translateX(-100%); width: 280px; }
-      .sidebar.open { transform: translateX(0); }
-      .main { margin-left: 0; width: 100%; padding: 15px; }
-      .menu-toggle { display: block; }
-      .header-add-btn { display: none; }
-      .fab { display: flex; }
-      .stats-grid { grid-template-columns: 1fr 1fr; }
-      .stats-grid .stat-card:last-child { grid-column: 1 / -1; }
-    }
+    .modal-box { background: white; width: 90%; max-width: 500px; padding: 25px; border-radius: 20px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.1); }
+    
+    input, select { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #e5e7eb; border-radius: 10px; outline: none; background: #F9FAFB; }
+    .btn-primary { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; }
+    
+    /* Veg Toggle */
+    .toggle-wrap { display:flex; align-items:center; gap:10px; margin-bottom:12px; background:#f0fdf4; padding:10px; border-radius:10px; border:1px solid #bbf7d0; }
+    .toggle-wrap label { color: #166534; font-weight: 700; font-size: 14px; }
   </style>
 </head>
 
 <body>
-  <audio id="alertSound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.m4a"></audio>
-
-  <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
-
-  <div class="sidebar" id="sidebar">
-    <div class="logo">
+  <div class="sidebar">
+    <div style="font-size:20px; font-weight:800; color:var(--primary); margin-bottom:30px; display:flex; align-items:center; gap:10px;">
       <i class='bx bxs-dashboard'></i> TABEY Admin
-      <i class='bx bx-x' onclick="toggleSidebar()" style="margin-left:auto; cursor:pointer; font-size:24px; color:#999;"></i>
     </div>
     <div class="nav-item active" onclick="switchTab('orders')"><i class='bx bxs-shopping-bag'></i> Live Orders</div>
     <div class="nav-item" onclick="switchTab('menu')"><i class='bx bxs-food-menu'></i> Menu Items</div>
-    <div class="nav-item" onclick="switchTab('stores')"><i class='bx bxs-store'></i> Stores & Vendors</div>
-    <div class="nav-item" onclick="logout()" style="margin-top:auto; color:var(--danger); background:#FEF2F2;"><i class='bx bxs-log-out'></i> Logout</div>
+    <div class="nav-item" onclick="switchTab('stores')"><i class='bx bxs-store'></i> Stores</div>
   </div>
 
   <div class="main">
-    <div class="header">
-      <div style="display:flex; align-items:center; gap:15px;">
-        <i class='bx bx-menu menu-toggle' onclick="toggleSidebar()"></i>
-        <div class="page-title">Dashboard</div>
-      </div>
-      <button class="btn-primary header-add-btn" style="width:auto; padding:10px 20px;" onclick="openAddModal()">+ Add New</button>
-    </div>
-
-    <div class="stats-grid">
-      <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-val" style="color:var(--warning)" id="countPending">0</div></div>
-      <div class="stat-card"><div class="stat-label">Revenue</div><div class="stat-val" style="color:var(--success)" id="totalRevenue">₹0</div></div>
-      <div class="stat-card"><div class="stat-label">Total Items</div><div class="stat-val" id="totalMenu">0</div></div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+      <h1 class="page-title" style="font-size:24px; font-weight:800;">Dashboard</h1>
+      <button class="btn-primary" style="width:auto; padding:10px 20px;" onclick="openAddModal()">+ Add New</button>
     </div>
 
     <div id="view-orders" class="section active">
-      <div class="orders-grid" id="ordersList"></div>
+      <div id="ordersList"></div>
     </div>
 
     <div id="view-menu" class="section">
-      <div class="reorder-mode-banner" id="menuReorderBanner">
-        <span>🎯 Drag items to reorder</span>
-        <button onclick="saveMenuOrder()" style="background:white; color:var(--primary); padding:8px 16px; border-radius:8px; border:none; font-weight:700; cursor:pointer;">Save Order</button>
-      </div>
       <div id="menuList"></div>
     </div>
 
     <div id="view-stores" class="section">
-      <div class="reorder-mode-banner" id="storeReorderBanner">
-        <span>🎯 Drag stores to reorder</span>
-        <button onclick="saveStoreOrder()" style="background:white; color:var(--primary); padding:8px 16px; border-radius:8px; border:none; font-weight:700; cursor:pointer;">Save Order</button>
-      </div>
       <div id="storeList"></div>
     </div>
   </div>
 
-  <button class="fab" onclick="openAddModal()"><i class='bx bx-plus'></i></button>
-
   <div class="modal-overlay" id="menuModal">
     <div class="modal-box">
-      <h2 style="margin-bottom:16px;" id="modalTitle">Add Item</h2>
+      <h2 style="margin-bottom:15px; font-weight:800;">Add Menu Item</h2>
+      
+      <label style="font-size:12px; font-weight:700; color:#666;">Name & Store</label>
       <input id="foodName" placeholder="Item Name (e.g. Chicken Biryani)">
       <select id="storeSelect"><option value="">Select Store</option></select>
-      <label style="font-size:12px; font-weight:700; color:#666; margin-bottom:5px; display:block;">Food Image</label>
-      <input type="file" id="foodImg" style="padding:10px;">
+
+      <label style="font-size:12px; font-weight:700; color:#666;">Category & Type</label>
+      <select id="foodCat">
+        <option value="All">Select Category</option>
+        <option value="Pizza">Pizza</option>
+        <option value="Burger">Burger</option>
+        <option value="Asian">Asian/Chinese</option>
+        <option value="Healthy">Healthy</option>
+        <option value="Dessert">Dessert</option>
+        <option value="Indian">Indian/Main Course</option>
+      </select>
+
+      <div class="toggle-wrap">
+        <input type="checkbox" id="isVeg" style="width:20px; height:20px; margin:0;">
+        <label for="isVeg">Is this Pure Veg?</label>
+      </div>
+
+      <label style="font-size:12px; font-weight:700; color:#666;">Image</label>
+      <input type="file" id="foodImg">
+
       <div style="background:#F3F4F6; padding:15px; border-radius:12px; margin-bottom:15px;">
         <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-          <small style="font-weight:800; color:#374151;">VARIANTS</small>
-          <small onclick="addVariantRow()" style="color:var(--primary); font-weight:700; cursor:pointer;">+ Add Row</small>
+          <small style="font-weight:800;">VARIANTS</small>
+          <small onclick="addVariantRow()" style="color:var(--primary); font-weight:700; cursor:pointer;">+ Add Variant</small>
         </div>
         <div id="variantsWrap"></div>
       </div>
+
       <button class="btn-primary" onclick="saveItem()">Save Item</button>
-      <button class="btn-primary btn-ghost" onclick="closeModal('menuModal')">Cancel</button>
-      <div id="status" style="margin-top:12px; text-align:center; font-size:13px; font-weight:700; color:var(--primary);"></div>
+      <button class="btn-primary" style="background:transparent; color:#666; margin-top:10px; border:1px solid #ddd;" onclick="closeModal('menuModal')">Cancel</button>
+      <div id="status" style="text-align:center; font-size:13px; font-weight:700; margin-top:10px; color:var(--primary);"></div>
     </div>
   </div>
 
   <div class="modal-overlay" id="storeModal">
     <div class="modal-box">
-      <h2 style="margin-bottom:16px;" id="storeModalTitle">Add Store</h2>
+      <h2 style="margin-bottom:15px; font-weight:800;">Add Store</h2>
       <input id="stName" placeholder="Store Name">
       <div style="display:flex; gap:10px;">
         <input id="stOpen" placeholder="Open (10:00 AM)">
         <input id="stClose" placeholder="Close (10:00 PM)">
       </div>
       <button class="btn-primary" onclick="saveStore()">Save Store</button>
-      <button class="btn-primary btn-ghost" onclick="closeModal('storeModal')">Cancel</button>
+      <button class="btn-primary" style="background:transparent; color:#666; margin-top:10px; border:1px solid #ddd;" onclick="closeModal('storeModal')">Cancel</button>
     </div>
   </div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, updateDoc, query, orderBy, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-
-  const app = initializeApp({ apiKey: "AIzaSyCuVtOv09ixwnZszRKxjq3PQtiDn3kE5ng", authDomain: "tabey-foods.firebaseapp.com", projectId: "tabey-foods", storageBucket: "tabey-foods.firebasestorage.app", messagingSenderId: "114325031482", appId: "1:114325031482:web:870ab98e268c16d7d4c303" });
+  import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, updateDoc, query, orderBy, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  
+  const app = initializeApp({ apiKey: "AIzaSyCuVtOv09ixwnZszRKxjq3PQtiDn3kE5ng", projectId: "tabey-foods" });
   const db = getFirestore(app);
-  const auth = getAuth(app);
 
-  onAuthStateChanged(auth, u => { if(!u) location.href="login.html"; });
-
-  const CLOUD_NAME = "dpcin9ipd";
-  const UPLOAD_PRESET = "tabey_unsigned";
+  // CLOUDINARY CONFIG
+  const CLOUD_NAME = "dpcin9ipd"; 
+  const UPLOAD_PRESET = "tabey_unsigned"; // MAKE SURE THIS EXISTS IN CLOUDINARY SETTINGS
 
   let currentTab='orders', editingMenuId=null, editingOldImg=null, editingStoreId=null;
-  let draggedElement=null, menuItems=[], storeItems=[];
+  let menuItems=[], storeItems=[];
 
-  // ✅ WAKE LOCK & SOUND
-  async function keepScreenOn() {
-    try { if('wakeLock' in navigator) await navigator.wakeLock.request('screen'); console.log("💡 Screen Lock"); }
-    catch(e){console.log("No Wake Lock");}
-  }
-  document.addEventListener('click', keepScreenOn, {once:true});
-
-  window.toggleSidebar = () => { document.getElementById('sidebar').classList.toggle('open'); document.querySelector('.sidebar-overlay').classList.toggle('show'); }
   window.switchTab = (tab) => {
-    currentTab = tab;
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     document.getElementById(`view-${tab}`).classList.add('active');
-    const idx = ['orders', 'menu', 'stores'].indexOf(tab);
-    document.querySelectorAll('.nav-item')[idx].classList.add('active');
-    document.querySelector('.page-title').innerText = tab === 'orders' ? 'Live Orders' : (tab === 'menu' ? 'Menu Items' : 'Stores & Vendors');
-    if(window.innerWidth < 768) toggleSidebar();
+    // Simplified nav highlighting
+    if(tab==='orders') document.querySelectorAll('.nav-item')[0].classList.add('active');
+    if(tab==='menu') document.querySelectorAll('.nav-item')[1].classList.add('active');
+    if(tab==='stores') document.querySelectorAll('.nav-item')[2].classList.add('active');
+    currentTab=tab;
   }
 
-  // --- ORDERS & SOUND ---
-  let isInit = true;
-  const qOrders = query(collection(db, "orders"), orderBy("timestamp", "desc"));
-  onSnapshot(qOrders, (snapshot) => {
-    // 🔔 NEW ORDER ALERT
-    if(!isInit) {
-        snapshot.docChanges().forEach(c => {
-            if(c.type === 'added') {
-                const aud = document.getElementById("alertSound");
-                aud.play().catch(e=>console.log("Click to enable audio"));
-                document.body.style.backgroundColor = "#ffeb3b";
-                setTimeout(()=> document.body.style.backgroundColor = "var(--light)", 600);
-            }
-        });
-    }
-    isInit = false;
-
+  // --- ORDERS ---
+  onSnapshot(query(collection(db, "orders"), orderBy("timestamp", "desc")), (snap) => {
     const list = document.getElementById("ordersList"); list.innerHTML = "";
-    let pendingCount = 0, revenue = 0;
-
-    if(snapshot.empty) { list.innerHTML = "<div style='text-align:center; padding:40px; color:#999;'>No Orders Yet</div>"; return; }
-
-    snapshot.forEach(docSnap => {
-      const order = docSnap.data(); const oid = docSnap.id;
-      if(order.status === "Pending") pendingCount++;
-      if(order.status === "Completed") revenue += (order.bill?.total || 0);
-
-      const itemsHtml = (order.items || []).map(i => `<div class="order-item-row"><span>${i.qty}x ${i.name} <small style="opacity:.6;">(${i.variantLabel||""})</small></span><span>₹${(i.price||0) * (i.qty||0)}</span></div>`).join("");
-      let btns = "";
-      if(order.status === "Pending") btns = `<button class="act-btn btn-accept" onclick="updateStatus('${oid}','Confirmed')">Accept</button><button class="act-btn btn-del" onclick="updateStatus('${oid}','Cancelled')">Reject</button>`;
-      else if(order.status === "Confirmed") btns = `<button class="act-btn btn-complete" style="grid-column:1/-1" onclick="updateStatus('${oid}','Completed')">Mark Delivered</button>`;
-      
-      const timeTxt = order.timestamp?.toDate ? new Date(order.timestamp.toDate()).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : "";
-
-      list.innerHTML += `
-        <div class="order-card">
-          <div class="order-header"><div><div class="cust-name">${order.customer?.name || "Customer"}</div><div class="order-time">${timeTxt}</div></div>${order.customer?.location ? `<a href="${order.customer.location}" target="_blank" style="background:#EEF2FF; width:36px; height:36px; display:flex; justify-content:center; align-items:center; border-radius:50%; color:var(--primary);"><i class='bx bxs-map'></i></a>` : ""}</div>
-          <div style="font-size:12px; margin-bottom:10px; color:#666;">📞 <a href="tel:${order.customer?.mobile || ""}">${order.customer?.mobile || ""}</a> • ${order.customer?.address || ""}</div>
-          <div class="order-items">${itemsHtml}</div>
-          <div class="order-total"><span>Total (${order.payment || "NA"})</span><span>₹${order.bill?.total || 0}</span></div>
-          <div style="text-align:right;"><span class="status-badge st-${order.status || "Pending"}">${order.status || "Pending"}</span></div>
-          <div class="action-btns">${btns}</div>
-        </div>`;
+    if(snap.empty) { list.innerHTML = "<div style='text-align:center; padding:40px; color:#999;'>No Orders Yet</div>"; return; }
+    
+    snap.forEach(doc => {
+      const o = doc.data();
+      list.innerHTML += `<div class="draggable-item" style="display:block;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:10px; font-weight:700;">
+            <span>${o.customer?.name || 'Customer'}</span>
+            <span style="color:${o.status==='Completed'?'green':'orange'}">${o.status}</span>
+        </div>
+        <div style="font-size:13px; color:#666;">${(o.items||[]).map(i=>`${i.qty}x ${i.name}`).join(', ')}</div>
+        <div style="margin-top:10px; font-weight:800;">Total: ₹${o.bill?.total}</div>
+        ${o.status==='Pending' ? `<div style="margin-top:10px; display:flex; gap:10px;">
+            <button onclick="updateStatus('${doc.id}','Confirmed')" style="padding:5px 10px; background:var(--primary); color:white; border:none; border-radius:5px; cursor:pointer;">Accept</button>
+            <button onclick="updateStatus('${doc.id}','Cancelled')" style="padding:5px 10px; background:#fee2e2; color:red; border:none; border-radius:5px; cursor:pointer;">Reject</button>
+        </div>` : ''}
+      </div>`;
     });
-    document.getElementById("countPending").innerText = pendingCount;
-    document.getElementById("totalRevenue").innerText = "₹" + revenue;
   });
-
-  window.updateStatus = async (id, st) => { if(confirm(`Mark ${st}?`)) await updateDoc(doc(db,"orders",id), {status:st}); }
+  window.updateStatus = async (id, st) => updateDoc(doc(db,"orders",id), {status:st});
 
   // --- MENU ---
   onSnapshot(collection(db, "menu"), snap => {
     menuItems = []; snap.forEach(d => menuItems.push({id:d.id, ...d.data()}));
-    menuItems.sort((a,b)=>(a.priority||9999)-(b.priority||9999));
-    document.getElementById("totalMenu").innerText = snap.size;
-    renderMenuList();
-  });
-  function renderMenuList() {
     const list = document.getElementById("menuList"); list.innerHTML = "";
-    if(menuItems.length===0){ list.innerHTML = "<div style='text-align:center; padding:40px; color:#999;'>No Menu Items</div>"; return; }
-    menuItems.forEach((item, idx) => {
-      const div = document.createElement('div'); div.className = 'draggable-item'; div.draggable = true; div.dataset.id = item.id; div.dataset.index = idx;
-      div.innerHTML = `<i class='bx bx-menu drag-handle'></i><img src="${item.img || ""}" class="item-img" onerror="this.src='https://via.placeholder.com/120'"><div class="item-info"><div class="item-title">${item.name}</div><div class="item-sub">🏪 ${item.storeName}</div><span class="item-priority">#${item.priority ?? 9999}</span></div><div class="item-actions"><button class="btn-icon" style="background:#F3F4F6;" onclick='editMenu("${item.id}", ${JSON.stringify(item).replace(/'/g,"&apos;")})'><i class='bx bxs-edit'></i></button><button class="btn-icon" style="background:#FEE2E2; color:red;" onclick="deleteMenu('${item.id}')"><i class='bx bxs-trash'></i></button></div>`;
-      addDragEvents(div, handleDrop);
-      list.appendChild(div);
+    
+    menuItems.forEach(item => {
+      list.innerHTML += `<div class="draggable-item">
+        <img src="${item.img || 'https://via.placeholder.com/60'}" class="item-img">
+        <div class="item-info">
+            <div style="font-weight:700;">${item.name}</div>
+            <div style="font-size:12px; color:#666;">${item.storeName} • ${item.category}</div>
+        </div>
+        <button class="btn-icon" style="background:#fee2e2; color:red;" onclick="deleteMenu('${item.id}')"><i class='bx bxs-trash'></i></button>
+      </div>`;
     });
-    document.getElementById('menuReorderBanner').classList.add('active');
-  }
+  });
 
   // --- STORES ---
   onSnapshot(collection(db, "stores"), snap => {
     storeItems = []; snap.forEach(d => storeItems.push({id:d.id, ...d.data()}));
-    storeItems.sort((a,b)=>(a.order||9999)-(b.order||9999));
+    const list = document.getElementById("storeList"); list.innerHTML = "";
     const select = document.getElementById("storeSelect");
     select.innerHTML = "<option value=''>Select Store</option>";
-    storeItems.forEach(s => select.innerHTML += `<option value="${s.name}">${s.name}</option>`);
-    renderStoreList();
-  });
-  function renderStoreList() {
-    const list = document.getElementById("storeList"); list.innerHTML = "";
-    if(storeItems.length===0){ list.innerHTML = "<div style='text-align:center; padding:40px; color:#999;'>No Stores</div>"; return; }
-    storeItems.forEach((store, idx) => {
-      const div = document.createElement('div'); div.className = 'draggable-item'; div.draggable = true; div.dataset.id = store.id; div.dataset.index = idx;
-      div.innerHTML = `<i class='bx bx-menu drag-handle'></i><div class="item-info" style="flex:1;"><div class="item-title">${store.name}</div><div class="item-sub">⏰ ${store.openTime} - ${store.closeTime}</div><span class="status-badge ${store.isOnline?'st-Completed':'st-Cancelled'}" style="margin-left:8px;">${store.isOnline?'Online':'Offline'}</span></div><div class="item-actions"><button class="btn-icon" style="background:${store.isOnline?'#D1FAE5':'#FEE2E2'}" onclick="toggleStore('${store.id}', ${!!store.isOnline})"><i class='bx bx-power-off'></i></button><button class="btn-icon" style="background:#F3F4F6;" onclick='editStore("${store.id}", ${JSON.stringify(store).replace(/'/g,"&apos;")})'><i class='bx bxs-edit'></i></button><button class="btn-icon" style="background:#FEE2E2; color:red;" onclick="deleteStore('${store.id}')"><i class='bx bxs-trash'></i></button></div>`;
-      addDragEvents(div, handleStoreDrop);
-      list.appendChild(div);
+
+    storeItems.forEach(store => {
+      // Populate Dropdown
+      select.innerHTML += `<option value="${store.name}">${store.name}</option>`;
+      
+      // Render List
+      list.innerHTML += `<div class="draggable-item">
+        <div class="item-info">
+            <div style="font-weight:700;">${store.name}</div>
+            <div style="font-size:12px; color:${store.isOnline?'green':'red'};">${store.isOnline ? 'Online' : 'Offline'}</div>
+        </div>
+        <button class="btn-icon" style="background:#dcfce7; color:green;" onclick="toggleStore('${store.id}', ${store.isOnline})"><i class='bx bx-power-off'></i></button>
+      </div>`;
     });
-    document.getElementById('storeReorderBanner').classList.add('active');
-  }
+  });
 
-  // --- DRAG LOGIC ---
-  function addDragEvents(el, dropHandler) {
-    el.addEventListener('dragstart', function(e){ draggedElement=this; this.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; });
-    el.addEventListener('dragend', function(){ this.classList.remove('dragging'); });
-    el.addEventListener('dragover', function(e){ e.preventDefault(); e.dataTransfer.dropEffect='move'; });
-    el.addEventListener('drop', dropHandler);
-  }
-  function handleDrop(e) { if(e.stopPropagation) e.stopPropagation(); if(draggedElement!==this){ const dI=parseInt(draggedElement.dataset.index); const tI=parseInt(this.dataset.index); const [rem]=menuItems.splice(dI,1); menuItems.splice(tI,0,rem); renderMenuList(); } return false; }
-  function handleStoreDrop(e) { if(e.stopPropagation) e.stopPropagation(); if(draggedElement!==this){ const dI=parseInt(draggedElement.dataset.index); const tI=parseInt(this.dataset.index); const [rem]=storeItems.splice(dI,1); storeItems.splice(tI,0,rem); renderStoreList(); } return false; }
-  
-  window.saveMenuOrder = async () => { const b=writeBatch(db); menuItems.forEach((it,i)=> b.update(doc(db,"menu",it.id), {priority:i+1})); await b.commit(); alert("Saved!"); }
-  window.saveStoreOrder = async () => { const b=writeBatch(db); storeItems.forEach((st,i)=> b.update(doc(db,"stores",st.id), {order:i+1})); await b.commit(); alert("Saved!"); }
-
-  // --- CRUD ---
-  window.openAddModal = () => { if(currentTab==='menu'){ editingMenuId=null; document.getElementById("modalTitle").innerText="Add Item"; document.getElementById("variantsWrap").innerHTML=""; addVariantRow("Half", 80); document.getElementById("menuModal").classList.add("open"); } else if(currentTab==='stores'){ editingStoreId=null; document.getElementById("storeModal").classList.add("open"); } }
-  window.closeModal = (id) => document.getElementById(id).classList.remove("open");
-  window.addVariantRow = (l="", p="") => { const w=document.getElementById("variantsWrap"); w.insertAdjacentHTML('beforeend', `<div style="display:flex;gap:8px;margin-bottom:8px;"><input class="vLabel" placeholder="Label" value="${l}" style="margin:0;flex:1;"><input class="vPrice" type="number" placeholder="Price" value="${p}" style="margin:0;width:120px;"><button class="btn-icon" style="background:#FEE2E2;color:#B91C1C;" onclick="this.parentElement.remove()">✕</button></div>`); }
-  
-  window.saveItem = async () => {
-    const name=document.getElementById("foodName").value, store=document.getElementById("storeSelect").value, file=document.getElementById("foodImg").files[0];
-    const vars=[]; document.querySelectorAll("#variantsWrap > div").forEach(r=>{ vars.push({label:r.querySelector(".vLabel").value, price:Number(r.querySelector(".vPrice").value)}); });
-    if(!name || !store || !vars.length) return alert("Fill details");
-    document.getElementById("status").innerText="Saving...";
-    let img=editingOldImg||""; if(file){ const fd=new FormData(); fd.append("file",file); fd.append("upload_preset",UPLOAD_PRESET); const res=await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,{method:"POST",body:fd}); const d=await res.json(); img=d.secure_url; }
-    if(editingMenuId) await updateDoc(doc(db,"menu",editingMenuId), {name, storeName:store, variants:vars, img});
-    else await addDoc(collection(db,"menu"), {name, storeName:store, variants:vars, img, priority:menuItems.length+1});
-    closeModal("menuModal"); document.getElementById("status").innerText="";
+  // --- ACTIONS ---
+  window.openAddModal = () => {
+    if(currentTab==='menu') {
+        document.getElementById("foodName").value="";
+        document.getElementById("variantsWrap").innerHTML="";
+        addVariantRow("Full", 120);
+        document.getElementById("menuModal").classList.add("open");
+    } else {
+        document.getElementById("storeModal").classList.add("open");
+    }
   };
+  window.closeModal = (id) => document.getElementById(id).classList.remove("open");
   
-  window.editMenu = (id, it) => { editingMenuId=id; editingOldImg=it.img; document.getElementById("foodName").value=it.name; document.getElementById("storeSelect").value=it.storeName; document.getElementById("variantsWrap").innerHTML=""; (it.variants||[]).forEach(v=>addVariantRow(v.label,v.price)); document.getElementById("menuModal").classList.add("open"); }
-  window.deleteMenu = async (id) => { if(confirm("Del?")) await deleteDoc(doc(db,"menu",id)); }
-  window.toggleStore = async (id, s) => updateDoc(doc(db,"stores",id), {isOnline:!s});
-  window.deleteStore = async (id) => { if(confirm("Del?")) await deleteDoc(doc(db,"stores",id)); }
+  window.addVariantRow = (l="", p="") => {
+    document.getElementById("variantsWrap").insertAdjacentHTML('beforeend', 
+    `<div style="display:flex;gap:8px;margin-bottom:8px;">
+        <input class="vLabel" placeholder="Label" value="${l}" style="margin:0;flex:1;">
+        <input class="vPrice" type="number" placeholder="Price" value="${p}" style="margin:0;width:80px;">
+        <button style="background:#fee2e2; color:red; border:none; padding:0 10px; border-radius:8px;" onclick="this.parentElement.remove()">✕</button>
+    </div>`);
+  }
+
+  // --- SAVE ITEM (ROBUST) ---
+  window.saveItem = async () => {
+    const name = document.getElementById("foodName").value;
+    const store = document.getElementById("storeSelect").value;
+    const cat = document.getElementById("foodCat").value;
+    const isVeg = document.getElementById("isVeg").checked;
+    const file = document.getElementById("foodImg").files[0];
+    
+    // Get Variants
+    const vars = []; 
+    document.querySelectorAll("#variantsWrap > div").forEach(r => { 
+        vars.push({
+            label: r.querySelector(".vLabel").value, 
+            price: Number(r.querySelector(".vPrice").value)
+        }); 
+    });
+
+    if(!name || !store || !vars.length) return alert("Please fill all fields");
+
+    document.getElementById("status").innerText = "Uploading Image...";
+    let img = "https://via.placeholder.com/300?text=No+Image"; // Default image
+
+    // Image Upload Logic
+    if(file) {
+        try {
+            const fd = new FormData();
+            fd.append("file", file);
+            fd.append("upload_preset", UPLOAD_PRESET);
+            const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: "POST", body: fd });
+            
+            if(res.ok) {
+                const data = await res.json();
+                img = data.secure_url;
+            } else {
+                alert("Image upload failed. Saving with placeholder.");
+            }
+        } catch(e) {
+            console.error(e);
+            alert("Network error on image upload. Saving with placeholder.");
+        }
+    }
+
+    document.getElementById("status").innerText = "Saving to Database...";
+    
+    // Save to Firestore
+    await addDoc(collection(db, "menu"), {
+        name, 
+        storeName: store, 
+        variants: vars, 
+        img, 
+        category: cat, 
+        isVeg: isVeg,
+        priority: menuItems.length + 1
+    });
+
+    closeModal("menuModal");
+    document.getElementById("status").innerText = "";
+    alert("Item Saved Successfully!");
+  };
+
   window.saveStore = async () => {
-    const name=document.getElementById("stName").value, op=document.getElementById("stOpen").value, cl=document.getElementById("stClose").value;
-    if(editingStoreId) await updateDoc(doc(db,"stores",editingStoreId), {name, openTime:op, closeTime:cl});
-    else await addDoc(collection(db,"stores"), {name, openTime:op, closeTime:cl, isOnline:true, order:storeItems.length+1});
+    const name = document.getElementById("stName").value;
+    if(!name) return;
+    await addDoc(collection(db, "stores"), {
+        name, 
+        openTime: document.getElementById("stOpen").value, 
+        closeTime: document.getElementById("stClose").value, 
+        isOnline: true
+    });
     closeModal("storeModal");
   }
-  window.editStore = (id, s) => { editingStoreId=id; document.getElementById("stName").value=s.name; document.getElementById("stOpen").value=s.openTime; document.getElementById("stClose").value=s.closeTime; document.getElementById("storeModal").classList.add("open"); }
-  window.logout = () => signOut(auth);
+
+  window.deleteMenu = async (id) => { if(confirm("Delete?")) await deleteDoc(doc(db,"menu",id)); }
+  window.toggleStore = async (id, s) => updateDoc(doc(db,"stores",id), {isOnline:!s});
+
 </script>
 </body>
 </html>
