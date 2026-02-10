@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>SANGHX • Gourmet</title>
+<title>TABEY • Gourmet</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
@@ -81,7 +81,7 @@
       <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-rose-500 to-orange-400 flex items-center justify-center text-white shadow-lg shadow-rose-500/20">
         <iconify-icon icon="solar:chef-hat-heart-linear" class="text-base"></iconify-icon>
       </div>
-      <span class="text-[var(--text)]">SANGHX</span>
+      <span class="text-[var(--text)]">TABEY</span>
     </div>
     <div class="flex gap-3 items-center">
       <button id="themeToggle" class="w-9 h-9 rounded-full border border-[var(--border)] flex items-center justify-center text-[var(--text)] hover:bg-[var(--surface)] transition-colors active:scale-90">
@@ -294,6 +294,7 @@
   };
   window.setCat = (c) => { FILTER = c; renderStore(); renderChips(); };
 
+  // --- ✅ FIXED RENDER STORE FUNCTION (NO PLACEHOLDERS) ---
   const renderStore = () => {
     els.stores.innerHTML = '';
     const sortedStores = [...STORES].sort((a,b) => (b.isOnline?1:0) - (a.isOnline?1:0));
@@ -301,46 +302,52 @@
     sortedStores.forEach((store) => {
       let items = MENU.filter(m => m.storeName === store.name);
       
+      // Filter Logic
       if (SEARCH) items = items.filter(i => i.name.toLowerCase().includes(SEARCH.toLowerCase()) || store.name.toLowerCase().includes(SEARCH.toLowerCase()));
       if (FILTER !== 'All') items = items.filter(i => i.category === FILTER || (FILTER==='Asian' && i.category==='Chinese'));
       if (VEG_ONLY) items = items.filter(i => i.isVeg || (i.name && i.name.toLowerCase().includes('veg') && !i.name.toLowerCase().includes('non')));
 
-      if (items.length === 0) return;
+      // --- 1. HANDLE EMPTY STORES ---
+      let itemsHtml = "";
+      if (items.length === 0) {
+          itemsHtml = `<div class="p-6 text-sm text-[var(--text-muted)] italic w-full text-center bg-[var(--surface)] rounded-2xl border border-[var(--border)]">No items match your filter.</div>`;
+      } else {
+          // --- 2. GENERATE FOOD CARDS (RESTORED CODE) ---
+          itemsHtml = items.map(item => {
+            const variants = item.variants || [{label: 'Regular', price: item.price}];
+            const uid = Math.random().toString(36).substr(2, 9);
+            const imgUrl = item.img || 'https://via.placeholder.com/300x200?text=Food';
+            
+            const variantHtml = variants.length > 1 ? `
+              <div class="flex gap-2 mt-3 overflow-x-auto no-scrollbar pb-1" id="var-group-${uid}">
+                ${variants.map((v, idx) => `<div class="custom-radio"><input type="radio" id="radio-${uid}-${idx}" name="var-${uid}" value="${v.label}|${v.price}" ${idx===0?'checked':''} onchange="document.getElementById('price-${uid}').innerText='${v.price}'"><label for="radio-${uid}-${idx}">${v.label}</label></div>`).join('')}
+              </div>` : `<div class="h-2 mt-3"></div>`;
+
+            return `
+              <div class="min-w-[260px] max-w-[260px] bg-[var(--card)] p-4 rounded-[32px] border border-[var(--border)] shadow-sm flex flex-col snap-start relative group hover:border-[var(--text-muted)] transition-colors duration-300">
+                  <div class="h-40 w-full rounded-[24px] overflow-hidden mb-4 relative bg-gray-100">
+                    <img src="${imgUrl}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" loading="lazy">
+                  </div>
+                  <div class="flex-1 flex flex-col">
+                    <h4 class="font-semibold text-[var(--text)] text-base leading-tight line-clamp-2">${item.name}</h4>
+                    ${variantHtml}
+                    <div class="mt-auto pt-4 flex justify-between items-end">
+                      <div>
+                        <span class="text-[10px] text-[var(--text-muted)] uppercase tracking-wider font-semibold">Price</span>
+                        <div class="font-bold text-xl text-[var(--text)] tracking-tight">₹<span id="price-${uid}">${variants[0].price}</span></div>
+                      </div>
+                      <button onclick="addToCart('${item.id}', '${item.name}', '${store.name}', '${uid}', ${variants.length > 1})" 
+                        class="w-10 h-10 rounded-full bg-[var(--text)] text-[var(--bg)] flex items-center justify-center text-lg shadow-lg active:scale-90 transition-all cursor-pointer"><iconify-icon icon="solar:add-circle-linear"></iconify-icon>
+                      </button>
+                    </div>
+                  </div>
+              </div>`;
+          }).join('');
+      }
 
       const section = document.createElement('div');
       section.className = `store-section animate-fade-up ${!store.isOnline ? 'opacity-60 grayscale pointer-events-none' : ''}`;
       
-      let itemsHtml = items.map(item => {
-        const variants = item.variants || [{label: 'Regular', price: item.price}];
-        const uid = Math.random().toString(36).substr(2, 9);
-        const imgUrl = item.img || 'https://via.placeholder.com/300x200?text=Food';
-        
-        const variantHtml = variants.length > 1 ? `
-          <div class="flex gap-2 mt-3 overflow-x-auto no-scrollbar pb-1" id="var-group-${uid}">
-            ${variants.map((v, idx) => `<div class="custom-radio"><input type="radio" id="radio-${uid}-${idx}" name="var-${uid}" value="${v.label}|${v.price}" ${idx===0?'checked':''} onchange="document.getElementById('price-${uid}').innerText='${v.price}'"><label for="radio-${uid}-${idx}">${v.label}</label></div>`).join('')}
-          </div>` : `<div class="h-2 mt-3"></div>`;
-
-        return `
-          <div class="min-w-[260px] max-w-[260px] bg-[var(--card)] p-4 rounded-[32px] border border-[var(--border)] shadow-sm flex flex-col snap-start relative group hover:border-[var(--text-muted)] transition-colors duration-300">
-             <div class="h-40 w-full rounded-[24px] overflow-hidden mb-4 relative bg-gray-100">
-               <img src="${imgUrl}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" loading="lazy">
-             </div>
-             <div class="flex-1 flex flex-col">
-               <h4 class="font-semibold text-[var(--text)] text-base leading-tight line-clamp-2">${item.name}</h4>
-               ${variantHtml}
-               <div class="mt-auto pt-4 flex justify-between items-end">
-                 <div>
-                   <span class="text-[10px] text-[var(--text-muted)] uppercase tracking-wider font-semibold">Price</span>
-                   <div class="font-bold text-xl text-[var(--text)] tracking-tight">₹<span id="price-${uid}">${variants[0].price}</span></div>
-                 </div>
-                 <button onclick="addToCart('${item.id}', '${item.name}', '${store.name}', '${uid}', ${variants.length > 1})" 
-                   class="w-10 h-10 rounded-full bg-[var(--text)] text-[var(--bg)] flex items-center justify-center text-lg shadow-lg active:scale-90 transition-all cursor-pointer"><iconify-icon icon="solar:add-circle-linear"></iconify-icon>
-                 </button>
-               </div>
-             </div>
-          </div>`;
-      }).join('');
-
       section.innerHTML = `
         <div class="flex justify-between items-center mb-5 px-1">
           <div class="flex items-center gap-3">
@@ -448,7 +455,7 @@
     });
   };
 
-  window.logout = () => { localStorage.removeItem("sanghx_user"); location.href = "customer-login.html"; };
+  window.logout = () => { localStorage.removeItem("tabey_user"); location.href = "customer-login.html"; };
 
   const showToast = (msg) => {
     const t = els.toast;
