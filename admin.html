@@ -1,313 +1,870 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>TABEY • Admin Panel</title>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
-  
-  <style>
-    :root { --primary: #4F46E5; --light: #F9FAFB; --dark: #111827; --white: #ffffff; --sidebar-width: 260px; }
-    * { margin:0; padding:0; box-sizing:border-box; font-family:'Plus Jakarta Sans', sans-serif; }
-    body { background: var(--light); color: var(--dark); display: flex; min-height: 100vh; }
-
-    /* Sidebar */
-    .sidebar { width: var(--sidebar-width); background: var(--white); position: fixed; height: 100%; border-right: 1px solid #e5e7eb; padding: 20px; z-index: 1000; display:flex; flex-direction:column; transition: transform 0.3s; }
-    .nav-item { display: flex; align-items: center; gap: 12px; padding: 14px; color: #6B7280; font-weight: 600; border-radius: 12px; cursor: pointer; margin-bottom: 5px; }
-    .nav-item.active { background: #EEF2FF; color: var(--primary); }
-    
-    /* Main Content */
-    .main { margin-left: var(--sidebar-width); flex: 1; padding: 20px; transition: 0.3s; }
-    .section { display: none; } .section.active { display: block; }
-    
-    /* Cards */
-    .draggable-item { background: var(--white); padding: 16px; border-radius: 16px; margin-bottom: 12px; border: 2px solid #f3f4f6; display: flex; align-items: center; gap: 12px; }
-    .item-img { width: 60px; height: 60px; border-radius: 10px; object-fit: cover; background: #eee; }
-    .item-info { flex: 1; }
-    .btn-icon { width: 36px; height: 36px; border-radius: 8px; border:none; cursor:pointer; font-size:18px; display:flex; justify-content:center; align-items:center; }
-
-    /* Modal */
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
-    .modal-overlay.open { display: flex; }
-    .modal-box { background: white; width: 90%; max-width: 500px; padding: 25px; border-radius: 20px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.1); }
-    
-    input, select { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #e5e7eb; border-radius: 10px; outline: none; background: #F9FAFB; }
-    .btn-primary { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; }
-    
-    /* Veg Toggle */
-    .toggle-wrap { display:flex; align-items:center; gap:10px; margin-bottom:12px; background:#f0fdf4; padding:10px; border-radius:10px; border:1px solid #bbf7d0; }
-    .toggle-wrap label { color: #166534; font-weight: 700; font-size: 14px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TABEY • Admin Console</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #d1d5db; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        @keyframes grow { from { height: 0; } }
+        .bar-animate { animation: grow 0.8s ease-out forwards; }
+    </style>
 </head>
+<body class="bg-gray-50 text-gray-900 flex h-screen overflow-hidden selection:bg-indigo-100 selection:text-indigo-700">
 
-<body>
-  <div class="sidebar">
-    <div style="font-size:20px; font-weight:800; color:var(--primary); margin-bottom:30px; display:flex; align-items:center; gap:10px;">
-      <i class='bx bxs-dashboard'></i> TABEY Admin
-    </div>
-    <div class="nav-item active" onclick="switchTab('orders')"><i class='bx bxs-shopping-bag'></i> Live Orders</div>
-    <div class="nav-item" onclick="switchTab('menu')"><i class='bx bxs-food-menu'></i> Menu Items</div>
-    <div class="nav-item" onclick="switchTab('stores')"><i class='bx bxs-store'></i> Stores</div>
-  </div>
+    <div id="toast-container" class="fixed bottom-6 right-6 z-[60] flex flex-col gap-2 pointer-events-none"></div>
 
-  <div class="main">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-      <h1 class="page-title" style="font-size:24px; font-weight:800;">Dashboard</h1>
-      <button class="btn-primary" style="width:auto; padding:10px 20px;" onclick="openAddModal()">+ Add New</button>
-    </div>
-
-    <div id="view-orders" class="section active">
-      <div id="ordersList"></div>
-    </div>
-
-    <div id="view-menu" class="section">
-      <div id="menuList"></div>
-    </div>
-
-    <div id="view-stores" class="section">
-      <div id="storeList"></div>
-    </div>
-  </div>
-
-  <div class="modal-overlay" id="menuModal">
-    <div class="modal-box">
-      <h2 style="margin-bottom:15px; font-weight:800;">Add Menu Item</h2>
-      
-      <label style="font-size:12px; font-weight:700; color:#666;">Name & Store</label>
-      <input id="foodName" placeholder="Item Name (e.g. Chicken Biryani)">
-      <select id="storeSelect"><option value="">Select Store</option></select>
-
-      <label style="font-size:12px; font-weight:700; color:#666;">Category & Type</label>
-      <select id="foodCat">
-        <option value="All">Select Category</option>
-        <option value="Pizza">Pizza</option>
-        <option value="Burger">Burger</option>
-        <option value="Asian">Asian/Chinese</option>
-        <option value="Healthy">Healthy</option>
-        <option value="Dessert">Dessert</option>
-        <option value="Indian">Indian/Main Course</option>
-      </select>
-
-      <div class="toggle-wrap">
-        <input type="checkbox" id="isVeg" style="width:20px; height:20px; margin:0;">
-        <label for="isVeg">Is this Pure Veg?</label>
-      </div>
-
-      <label style="font-size:12px; font-weight:700; color:#666;">Image</label>
-      <input type="file" id="foodImg">
-
-      <div style="background:#F3F4F6; padding:15px; border-radius:12px; margin-bottom:15px;">
-        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-          <small style="font-weight:800;">VARIANTS</small>
-          <small onclick="addVariantRow()" style="color:var(--primary); font-weight:700; cursor:pointer;">+ Add Variant</small>
+    <aside class="w-64 bg-white border-r border-gray-200 hidden md:flex flex-col z-20 flex-shrink-0" id="sidebar">
+        <div class="h-16 flex items-center px-6 border-b border-gray-100 justify-between">
+            <div class="flex items-center gap-2 text-indigo-600">
+                <iconify-icon icon="solar:command-linear" width="24" stroke-width="2"></iconify-icon>
+                <span class="text-lg font-bold tracking-tight text-gray-900">TABEY</span>
+            </div>
+            <button onclick="toggleSidebar()" class="md:hidden text-gray-400"><iconify-icon icon="solar:close-circle-linear" width="24"></iconify-icon></button>
         </div>
-        <div id="variantsWrap"></div>
-      </div>
 
-      <button class="btn-primary" onclick="saveItem()">Save Item</button>
-      <button class="btn-primary" style="background:transparent; color:#666; margin-top:10px; border:1px solid #ddd;" onclick="closeModal('menuModal')">Cancel</button>
-      <div id="status" style="text-align:center; font-size:13px; font-weight:700; margin-top:10px; color:var(--primary);"></div>
-    </div>
-  </div>
-
-  <div class="modal-overlay" id="storeModal">
-    <div class="modal-box">
-      <h2 style="margin-bottom:15px; font-weight:800;">Add Store</h2>
-      <input id="stName" placeholder="Store Name">
-      <div style="display:flex; gap:10px;">
-        <input id="stOpen" placeholder="Open (10:00 AM)">
-        <input id="stClose" placeholder="Close (10:00 PM)">
-      </div>
-      <button class="btn-primary" onclick="saveStore()">Save Store</button>
-      <button class="btn-primary" style="background:transparent; color:#666; margin-top:10px; border:1px solid #ddd;" onclick="closeModal('storeModal')">Cancel</button>
-    </div>
-  </div>
-
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, updateDoc, query, orderBy, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-  
-  const app = initializeApp({ apiKey: "AIzaSyCuVtOv09ixwnZszRKxjq3PQtiDn3kE5ng", projectId: "tabey-foods" });
-  const db = getFirestore(app);
-
-  // CLOUDINARY CONFIG
-  const CLOUD_NAME = "dpcin9ipd"; 
-  const UPLOAD_PRESET = "tabey_unsigned"; // MAKE SURE THIS EXISTS IN CLOUDINARY SETTINGS
-
-  let currentTab='orders', editingMenuId=null, editingOldImg=null, editingStoreId=null;
-  let menuItems=[], storeItems=[];
-
-  window.switchTab = (tab) => {
-    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    document.getElementById(`view-${tab}`).classList.add('active');
-    // Simplified nav highlighting
-    if(tab==='orders') document.querySelectorAll('.nav-item')[0].classList.add('active');
-    if(tab==='menu') document.querySelectorAll('.nav-item')[1].classList.add('active');
-    if(tab==='stores') document.querySelectorAll('.nav-item')[2].classList.add('active');
-    currentTab=tab;
-  }
-
-  // --- ORDERS ---
-  onSnapshot(query(collection(db, "orders"), orderBy("timestamp", "desc")), (snap) => {
-    const list = document.getElementById("ordersList"); list.innerHTML = "";
-    if(snap.empty) { list.innerHTML = "<div style='text-align:center; padding:40px; color:#999;'>No Orders Yet</div>"; return; }
-    
-    snap.forEach(doc => {
-      const o = doc.data();
-      list.innerHTML += `<div class="draggable-item" style="display:block;">
-        <div style="display:flex; justify-content:space-between; margin-bottom:10px; font-weight:700;">
-            <span>${o.customer?.name || 'Customer'}</span>
-            <span style="color:${o.status==='Completed'?'green':'orange'}">${o.status}</span>
-        </div>
-        <div style="font-size:13px; color:#666;">${(o.items||[]).map(i=>`${i.qty}x ${i.name}`).join(', ')}</div>
-        <div style="margin-top:10px; font-weight:800;">Total: ₹${o.bill?.total}</div>
-        ${o.status==='Pending' ? `<div style="margin-top:10px; display:flex; gap:10px;">
-            <button onclick="updateStatus('${doc.id}','Confirmed')" style="padding:5px 10px; background:var(--primary); color:white; border:none; border-radius:5px; cursor:pointer;">Accept</button>
-            <button onclick="updateStatus('${doc.id}','Cancelled')" style="padding:5px 10px; background:#fee2e2; color:red; border:none; border-radius:5px; cursor:pointer;">Reject</button>
-        </div>` : ''}
-      </div>`;
-    });
-  });
-  window.updateStatus = async (id, st) => updateDoc(doc(db,"orders",id), {status:st});
-
-  // --- MENU ---
-  onSnapshot(collection(db, "menu"), snap => {
-    menuItems = []; snap.forEach(d => menuItems.push({id:d.id, ...d.data()}));
-    const list = document.getElementById("menuList"); list.innerHTML = "";
-    
-    menuItems.forEach(item => {
-      list.innerHTML += `<div class="draggable-item">
-        <img src="${item.img || 'https://via.placeholder.com/60'}" class="item-img">
-        <div class="item-info">
-            <div style="font-weight:700;">${item.name}</div>
-            <div style="font-size:12px; color:#666;">${item.storeName} • ${item.category}</div>
-        </div>
-        <button class="btn-icon" style="background:#fee2e2; color:red;" onclick="deleteMenu('${item.id}')"><i class='bx bxs-trash'></i></button>
-      </div>`;
-    });
-  });
-
-  // --- STORES ---
-  onSnapshot(collection(db, "stores"), snap => {
-    storeItems = []; snap.forEach(d => storeItems.push({id:d.id, ...d.data()}));
-    const list = document.getElementById("storeList"); list.innerHTML = "";
-    const select = document.getElementById("storeSelect");
-    select.innerHTML = "<option value=''>Select Store</option>";
-
-    storeItems.forEach(store => {
-      // Populate Dropdown
-      select.innerHTML += `<option value="${store.name}">${store.name}</option>`;
-      
-      // Render List
-      list.innerHTML += `<div class="draggable-item">
-        <div class="item-info">
-            <div style="font-weight:700;">${store.name}</div>
-            <div style="font-size:12px; color:${store.isOnline?'green':'red'};">${store.isOnline ? 'Online' : 'Offline'}</div>
-        </div>
-        <button class="btn-icon" style="background:#dcfce7; color:green;" onclick="toggleStore('${store.id}', ${store.isOnline})"><i class='bx bx-power-off'></i></button>
-      </div>`;
-    });
-  });
-
-  // --- ACTIONS ---
-  window.openAddModal = () => {
-    if(currentTab==='menu') {
-        document.getElementById("foodName").value="";
-        document.getElementById("variantsWrap").innerHTML="";
-        addVariantRow("Full", 120);
-        document.getElementById("menuModal").classList.add("open");
-    } else {
-        document.getElementById("storeModal").classList.add("open");
-    }
-  };
-  window.closeModal = (id) => document.getElementById(id).classList.remove("open");
-  
-  window.addVariantRow = (l="", p="") => {
-    document.getElementById("variantsWrap").insertAdjacentHTML('beforeend', 
-    `<div style="display:flex;gap:8px;margin-bottom:8px;">
-        <input class="vLabel" placeholder="Label" value="${l}" style="margin:0;flex:1;">
-        <input class="vPrice" type="number" placeholder="Price" value="${p}" style="margin:0;width:80px;">
-        <button style="background:#fee2e2; color:red; border:none; padding:0 10px; border-radius:8px;" onclick="this.parentElement.remove()">✕</button>
-    </div>`);
-  }
-
-  // --- SAVE ITEM (ROBUST) ---
-  window.saveItem = async () => {
-    const name = document.getElementById("foodName").value;
-    const store = document.getElementById("storeSelect").value;
-    const cat = document.getElementById("foodCat").value;
-    const isVeg = document.getElementById("isVeg").checked;
-    const file = document.getElementById("foodImg").files[0];
-    
-    // Get Variants
-    const vars = []; 
-    document.querySelectorAll("#variantsWrap > div").forEach(r => { 
-        vars.push({
-            label: r.querySelector(".vLabel").value, 
-            price: Number(r.querySelector(".vPrice").value)
-        }); 
-    });
-
-    if(!name || !store || !vars.length) return alert("Please fill all fields");
-
-    document.getElementById("status").innerText = "Uploading Image...";
-    let img = "https://via.placeholder.com/300?text=No+Image"; // Default image
-
-    // Image Upload Logic
-    if(file) {
-        try {
-            const fd = new FormData();
-            fd.append("file", file);
-            fd.append("upload_preset", UPLOAD_PRESET);
-            const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: "POST", body: fd });
+        <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
+            <div class="px-2 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Overview</div>
             
-            if(res.ok) {
-                const data = await res.json();
-                img = data.secure_url;
-            } else {
-                alert("Image upload failed. Saving with placeholder.");
-            }
-        } catch(e) {
-            console.error(e);
-            alert("Network error on image upload. Saving with placeholder.");
+            <button onclick="switchTab('orders')" id="nav-orders" class="nav-item w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 transition-all group">
+                <iconify-icon icon="solar:bag-3-linear" width="18" class="text-gray-400 group-hover:text-gray-600"></iconify-icon>
+                Live Orders
+            </button>
+            
+            <button onclick="switchTab('analytics')" id="nav-analytics" class="nav-item w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 transition-all group">
+                <iconify-icon icon="solar:chart-2-linear" width="18" class="text-gray-400 group-hover:text-gray-600"></iconify-icon>
+                Analytics
+            </button>
+
+            <div class="px-2 mt-6 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Management</div>
+
+            <button onclick="switchTab('menu')" id="nav-menu" class="nav-item w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 transition-all group">
+                <iconify-icon icon="solar:chef-hat-linear" width="18" class="text-gray-400 group-hover:text-gray-600"></iconify-icon>
+                Menu Items
+            </button>
+            
+            <button onclick="switchTab('stores')" id="nav-stores" class="nav-item w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 transition-all group">
+                <iconify-icon icon="solar:shop-2-linear" width="18" class="text-gray-400 group-hover:text-gray-600"></iconify-icon>
+                Stores
+            </button>
+
+            <button onclick="switchTab('riders')" id="nav-riders" class="nav-item w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 transition-all group">
+                <iconify-icon icon="solar:bicycle-linear" width="18" class="text-gray-400 group-hover:text-gray-600"></iconify-icon>
+                Riders & Fleet
+            </button>
+
+            <div class="px-2 mt-6 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">System</div>
+
+            <button onclick="switchTab('settings')" id="nav-settings" class="nav-item w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 transition-all group">
+                <iconify-icon icon="solar:settings-linear" width="18" class="text-gray-400 group-hover:text-gray-600"></iconify-icon>
+                Settings
+            </button>
+        </nav>
+
+        <div class="p-4 border-t border-gray-100">
+            <div class="flex items-center gap-3 px-3 py-2 rounded-lg bg-gray-50 border border-gray-100 cursor-pointer hover:bg-gray-100 transition-colors" onclick="logout()">
+                <div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-xs ring-2 ring-white">AD</div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-gray-900 truncate">Admin User</p>
+                    <p class="text-xs text-gray-500 truncate">Log Out</p>
+                </div>
+                <iconify-icon icon="solar:logout-2-linear" width="16" class="text-red-400"></iconify-icon>
+            </div>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+        <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 md:px-8 flex-shrink-0 z-10">
+            <div class="flex items-center gap-3 md:hidden">
+                <button onclick="toggleSidebar()"><iconify-icon icon="solar:hamburger-menu-linear" width="24" class="text-gray-600"></iconify-icon></button>
+                <span class="font-bold text-lg">TABEY</span>
+            </div>
+            
+            <div class="hidden md:flex flex-1 items-center gap-8">
+                <h1 id="pageTitle" class="text-xl font-bold tracking-tight text-gray-900 min-w-[140px]">Dashboard</h1>
+                
+                <div class="relative w-full max-w-md group">
+                    <iconify-icon icon="solar:magnifer-linear" class="absolute left-3 top-2.5 text-gray-400 group-focus-within:text-indigo-500 transition-colors" width="18"></iconify-icon>
+                    <input id="globalSearch" type="text" placeholder="Search orders, items, riders..." class="w-full bg-gray-50 border border-gray-200 rounded-lg pl-10 pr-4 py-2 text-sm outline-none focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder:text-gray-400">
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <div class="hidden md:flex flex-col items-end mr-4">
+                    <span class="text-xs text-gray-500 font-medium uppercase tracking-wide">Status</span>
+                    <span class="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> System Online
+                    </span>
+                </div>
+                <button onclick="openAddModal()" id="mainActionBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm shadow-indigo-200 flex items-center gap-2 active:scale-95">
+                    <iconify-icon icon="solar:add-circle-bold" width="18"></iconify-icon>
+                    <span id="actionBtnText">Add New</span>
+                </button>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 scroll-smooth bg-gray-50/50">
+            
+            <div id="statsBar" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] transition-transform hover:-translate-y-1 duration-300 group">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="p-2 bg-indigo-50 rounded-lg text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors"><iconify-icon icon="solar:wallet-money-linear" width="20"></iconify-icon></div>
+                        <span class="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded border border-emerald-100">+12%</span>
+                    </div>
+                    <div class="text-2xl font-bold tracking-tight text-gray-900 mb-1" id="totalRevenue">₹0</div>
+                    <div class="text-xs font-medium text-gray-500">Total Revenue</div>
+                </div>
+
+                <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm transition-transform hover:-translate-y-1 duration-300 group">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="p-2 bg-orange-50 rounded-lg text-orange-600 group-hover:bg-orange-500 group-hover:text-white transition-colors"><iconify-icon icon="solar:clipboard-list-linear" width="20"></iconify-icon></div>
+                        <span class="text-xs font-medium text-orange-600 bg-orange-50 px-2 py-1 rounded border border-orange-100">Active</span>
+                    </div>
+                    <div class="text-2xl font-bold tracking-tight text-gray-900 mb-1" id="activeOrderCount">0</div>
+                    <div class="text-xs font-medium text-gray-500">Pending Orders</div>
+                </div>
+
+                <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm transition-transform hover:-translate-y-1 duration-300 group">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="p-2 bg-blue-50 rounded-lg text-blue-600 group-hover:bg-blue-500 group-hover:text-white transition-colors"><iconify-icon icon="solar:user-hand-up-linear" width="20"></iconify-icon></div>
+                        <span class="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-100">Total</span>
+                    </div>
+                    <div class="text-2xl font-bold tracking-tight text-gray-900 mb-1" id="totalCustomers">1,248</div>
+                    <div class="text-xs font-medium text-gray-500">Registered Users</div>
+                </div>
+
+                <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm transition-transform hover:-translate-y-1 duration-300 group">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="p-2 bg-emerald-50 rounded-lg text-emerald-600 group-hover:bg-emerald-500 group-hover:text-white transition-colors"><iconify-icon icon="solar:bicycling-linear" width="20"></iconify-icon></div>
+                        <span class="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded border border-emerald-100">Now</span>
+                    </div>
+                    <div class="text-2xl font-bold tracking-tight text-gray-900 mb-1" id="activeRidersCount">0</div>
+                    <div class="text-xs font-medium text-gray-500">Riders Online</div>
+                </div>
+            </div>
+
+            <div id="view-orders" class="section block space-y-4">
+                <div class="flex justify-between items-end mb-2">
+                    <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Recent Activity</h3>
+                    <div class="flex gap-2 text-xs">
+                        <button class="px-3 py-1 bg-white border border-gray-200 rounded-md text-gray-600 hover:border-indigo-300 shadow-sm">Filter</button>
+                        <button class="px-3 py-1 bg-white border border-gray-200 rounded-md text-gray-600 hover:border-indigo-300 shadow-sm">Export</button>
+                    </div>
+                </div>
+                <div id="ordersList" class="grid gap-3">
+                    </div>
+            </div>
+
+            <div id="view-analytics" class="section hidden space-y-6">
+                 <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+                    <div class="flex justify-between items-center mb-6">
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-900">Revenue Overview</h3>
+                            <p class="text-sm text-gray-500">Gross sales performance over the last 7 days</p>
+                        </div>
+                    </div>
+                    
+                    <div class="h-64 flex items-end justify-between gap-2 md:gap-4 px-2">
+                        <div class="flex flex-col items-center gap-2 w-full group"><div class="w-full bg-indigo-50 rounded-t-lg relative h-full flex items-end overflow-hidden"><div class="w-full bg-indigo-500 rounded-t-lg opacity-80 group-hover:opacity-100 transition-all bar-animate" style="height: 45%"></div></div><span class="text-xs text-gray-400 font-medium">Mon</span></div>
+                        <div class="flex flex-col items-center gap-2 w-full group"><div class="w-full bg-indigo-50 rounded-t-lg relative h-full flex items-end overflow-hidden"><div class="w-full bg-indigo-500 rounded-t-lg opacity-80 group-hover:opacity-100 transition-all bar-animate" style="height: 62%"></div></div><span class="text-xs text-gray-400 font-medium">Tue</span></div>
+                        <div class="flex flex-col items-center gap-2 w-full group"><div class="w-full bg-indigo-50 rounded-t-lg relative h-full flex items-end overflow-hidden"><div class="w-full bg-indigo-500 rounded-t-lg opacity-80 group-hover:opacity-100 transition-all bar-animate" style="height: 35%"></div></div><span class="text-xs text-gray-400 font-medium">Wed</span></div>
+                        <div class="flex flex-col items-center gap-2 w-full group"><div class="w-full bg-indigo-50 rounded-t-lg relative h-full flex items-end overflow-hidden"><div class="w-full bg-indigo-500 rounded-t-lg opacity-80 group-hover:opacity-100 transition-all bar-animate" style="height: 78%"></div></div><span class="text-xs text-gray-400 font-medium">Thu</span></div>
+                        <div class="flex flex-col items-center gap-2 w-full group"><div class="w-full bg-indigo-50 rounded-t-lg relative h-full flex items-end overflow-hidden"><div class="w-full bg-indigo-500 rounded-t-lg opacity-80 group-hover:opacity-100 transition-all bar-animate" style="height: 55%"></div></div><span class="text-xs text-gray-400 font-medium">Fri</span></div>
+                        <div class="flex flex-col items-center gap-2 w-full group"><div class="w-full bg-indigo-50 rounded-t-lg relative h-full flex items-end overflow-hidden"><div class="w-full bg-indigo-500 rounded-t-lg opacity-80 group-hover:opacity-100 transition-all bar-animate" style="height: 85%"></div></div><span class="text-xs text-gray-400 font-medium">Sat</span></div>
+                        <div class="flex flex-col items-center gap-2 w-full group"><div class="w-full bg-indigo-50 rounded-t-lg relative h-full flex items-end overflow-hidden"><div class="w-full bg-indigo-500 rounded-t-lg opacity-80 group-hover:opacity-100 transition-all bar-animate" style="height: 68%"></div></div><span class="text-xs text-gray-400 font-medium">Sun</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-menu" class="section hidden space-y-4">
+                <div id="menuList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            </div>
+
+            <div id="view-stores" class="section hidden space-y-4">
+                <div id="storeList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            </div>
+
+            <div id="view-riders" class="section hidden space-y-4">
+                <div class="flex items-center gap-2 mb-4 bg-blue-50 p-3 rounded-lg border border-blue-100 text-blue-800 text-sm">
+                    <iconify-icon icon="solar:info-circle-linear" width="16"></iconify-icon>
+                    <span>Manage your fleet. Assign riders to zones or check their live status.</span>
+                </div>
+                
+                <div class="flex gap-2 overflow-x-auto pb-2 hide-scrollbar">
+                    <button class="px-4 py-1.5 bg-gray-900 text-white rounded-full text-xs font-medium shadow-sm whitespace-nowrap">All Riders</button>
+                    <button class="px-4 py-1.5 bg-white border border-gray-200 text-gray-600 rounded-full text-xs font-medium hover:bg-gray-50 whitespace-nowrap">Available</button>
+                    <button class="px-4 py-1.5 bg-white border border-gray-200 text-gray-600 rounded-full text-xs font-medium hover:bg-gray-50 whitespace-nowrap">Busy</button>
+                    <button class="px-4 py-1.5 bg-white border border-gray-200 text-gray-600 rounded-full text-xs font-medium hover:bg-gray-50 whitespace-nowrap">Offline</button>
+                </div>
+
+                <div id="riderList" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></div>
+            </div>
+
+            <div id="view-settings" class="section hidden max-w-2xl mx-auto space-y-6">
+                 <div class="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+                    <div class="p-6 border-b border-gray-100">
+                        <h3 class="text-lg font-bold text-gray-900">General Configuration</h3>
+                        <p class="text-sm text-gray-500">Manage global settings for your application.</p>
+                    </div>
+                    <div class="p-6 space-y-6">
+                        <div class="grid grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Platform Fee (%)</label>
+                                <input type="number" value="15" class="w-full bg-gray-50 border border-gray-200 rounded-lg pl-3 py-2.5 text-sm font-medium outline-none focus:border-indigo-500 transition-all">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Delivery Base Fee</label>
+                                <input type="number" value="40" class="w-full bg-gray-50 border border-gray-200 rounded-lg pl-3 py-2.5 text-sm font-medium outline-none focus:border-indigo-500 transition-all">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-4 bg-gray-50 border-t border-gray-200 flex justify-end">
+                        <button onclick="showToast('Settings Saved', 'success')" class="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-black transition-colors shadow-sm">Save Changes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="orderModal" class="fixed inset-0 bg-gray-900/30 backdrop-blur-sm z-50 hidden items-center justify-center p-4 opacity-0 transition-opacity duration-200">
+        <div class="bg-white rounded-2xl w-full max-w-2xl shadow-2xl transform scale-95 transition-transform duration-200 flex flex-col max-h-[90vh]">
+            <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 rounded-t-2xl">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h2 class="text-xl font-bold text-gray-900">Order #<span id="modalOrderId">...</span></h2>
+                        <span id="modalOrderStatus" class="px-2 py-0.5 text-xs font-bold rounded-full bg-orange-100 text-orange-700">Pending</span>
+                    </div>
+                    <div class="text-xs text-gray-500 mt-1" id="modalOrderTime">...</div>
+                </div>
+                <div class="flex gap-2">
+                    <button class="p-2 text-gray-500 hover:bg-white hover:text-indigo-600 rounded-lg border border-transparent hover:border-gray-200 transition-all shadow-sm" title="Print Receipt"><iconify-icon icon="solar:printer-linear" width="20"></iconify-icon></button>
+                    <button onclick="closeModal('orderModal')" class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"><iconify-icon icon="solar:close-circle-linear" width="24"></iconify-icon></button>
+                </div>
+            </div>
+            
+            <div class="p-0 overflow-y-auto flex-1 flex flex-col md:flex-row h-full">
+                <div class="flex-1 p-6 border-b md:border-b-0 md:border-r border-gray-100">
+                    <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-4">Order Items</h3>
+                    <div id="modalItemsList" class="space-y-4"></div>
+                    <div class="mt-6 pt-4 border-t border-gray-100 space-y-2">
+                        <div class="flex justify-between text-sm text-gray-600"><span>Subtotal</span> <span id="modalSubtotal">₹0</span></div>
+                        <div class="flex justify-between text-lg font-bold text-gray-900 pt-2 border-t border-gray-100"><span>Total</span> <span id="modalTotal">₹0</span></div>
+                    </div>
+                </div>
+
+                <div class="w-full md:w-72 bg-gray-50 p-6 space-y-6">
+                    <div>
+                        <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Customer</h3>
+                        <div class="flex items-center gap-3 mb-2">
+                            <div class="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-500 text-xs font-bold shadow-sm">C</div>
+                            <div>
+                                <div class="text-sm font-bold text-gray-900" id="modalCustName">...</div>
+                                <div class="text-xs text-gray-500">+91 98765 43210</div>
+                            </div>
+                        </div>
+                        <div class="text-sm text-gray-600 bg-white p-3 rounded-lg border border-gray-200 shadow-sm leading-relaxed">
+                            <iconify-icon icon="solar:map-point-linear" class="inline-block mr-1 text-gray-400 align-middle" width="14"></iconify-icon>
+                            <span id="modalCustAddress">...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="p-4 border-t border-gray-100 bg-white rounded-b-2xl flex justify-end gap-3">
+                 <button onclick="closeModal('orderModal')" class="px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 text-sm">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="menuModal" class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4 opacity-0 transition-opacity duration-200">
+        <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl transform scale-95 transition-transform duration-200 flex flex-col max-h-[90vh]">
+            <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+                <h2 class="text-lg font-bold text-gray-900">Add Menu Item</h2>
+                <button onclick="closeModal('menuModal')" class="text-gray-400 hover:text-gray-600"><iconify-icon icon="solar:close-circle-linear" width="24"></iconify-icon></button>
+            </div>
+            <div class="p-6 overflow-y-auto space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1.5">Product Name</label>
+                    <input id="foodName" type="text" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all" placeholder="e.g. Spicy Chicken Burger">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1.5">Store</label>
+                        <div class="relative">
+                            <select id="storeSelect" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none appearance-none focus:border-indigo-500">
+                                <option value="">Select Store</option>
+                            </select>
+                            <iconify-icon icon="solar:alt-arrow-down-linear" class="absolute right-3 top-3 text-gray-400 pointer-events-none" width="16"></iconify-icon>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1.5">Category</label>
+                        <div class="relative">
+                            <select id="foodCat" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none appearance-none focus:border-indigo-500">
+                                <option value="Pizza">Pizza</option>
+                                <option value="Burger">Burger</option>
+                                <option value="Asian">Asian</option>
+                                <option value="Indian">Indian</option>
+                                <option value="Dessert">Dessert</option>
+                            </select>
+                            <iconify-icon icon="solar:alt-arrow-down-linear" class="absolute right-3 top-3 text-gray-400 pointer-events-none" width="16"></iconify-icon>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex items-center justify-between p-3 bg-emerald-50 border border-emerald-100 rounded-lg">
+                    <span class="text-sm font-medium text-emerald-800">Is this item Pure Veg?</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="isVeg" class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                    </label>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1.5">Image</label>
+                    <input type="file" id="foodImg" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 border border-gray-200 rounded-lg cursor-pointer">
+                </div>
+
+                <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="text-xs font-bold text-gray-500 uppercase tracking-wide">Variants</span>
+                        <button onclick="addVariantRow()" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
+                            <iconify-icon icon="solar:add-circle-linear" width="16"></iconify-icon> Add Size
+                        </button>
+                    </div>
+                    <div id="variantsWrap" class="space-y-2"></div>
+                </div>
+            </div>
+            <div class="p-6 border-t border-gray-100 bg-gray-50 rounded-b-2xl flex gap-3">
+                <button onclick="closeModal('menuModal')" class="flex-1 px-4 py-2.5 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">Cancel</button>
+                <button onclick="saveItem()" class="flex-1 px-4 py-2.5 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 shadow-sm shadow-indigo-200 transition-colors flex justify-center items-center gap-2">
+                    <span id="saveBtnText">Save Item</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="storeModal" class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4 opacity-0 transition-opacity duration-200">
+        <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl transform scale-95 transition-transform duration-200">
+            <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+                <h2 class="text-lg font-bold text-gray-900">Add New Store</h2>
+                <button onclick="closeModal('storeModal')" class="text-gray-400 hover:text-gray-600"><iconify-icon icon="solar:close-circle-linear" width="24"></iconify-icon></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1.5">Store Name</label>
+                    <input id="stName" type="text" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" placeholder="e.g. Burger King">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1.5">Opening Time</label>
+                        <input id="stOpen" type="time" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1.5">Closing Time</label>
+                        <input id="stClose" type="time" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-indigo-500">
+                    </div>
+                </div>
+            </div>
+            <div class="p-6 border-t border-gray-100 bg-gray-50 rounded-b-2xl flex gap-3">
+                <button onclick="closeModal('storeModal')" class="flex-1 px-4 py-2.5 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50">Cancel</button>
+                <button onclick="saveStore()" class="flex-1 px-4 py-2.5 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700">Create Store</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="riderModal" class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4 opacity-0 transition-opacity duration-200">
+        <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl transform scale-95 transition-transform duration-200">
+            <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+                <h2 class="text-lg font-bold text-gray-900">Onboard Rider</h2>
+                <button onclick="closeModal('riderModal')" class="text-gray-400 hover:text-gray-600"><iconify-icon icon="solar:close-circle-linear" width="24"></iconify-icon></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1.5">Full Name</label>
+                    <input id="riderName" type="text" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" placeholder="e.g. Sagar Kumar">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1.5">Phone Number</label>
+                    <input id="riderPhone" type="tel" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" placeholder="+91 98765 43210">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1.5">Vehicle Type</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="vehicle" value="Bike" class="peer sr-only" checked="">
+                            <div class="rounded-lg border border-gray-200 p-3 text-center peer-checked:border-indigo-500 peer-checked:bg-indigo-50 peer-checked:text-indigo-700 hover:bg-gray-50 transition-all">
+                                <iconify-icon icon="solar:bicycling-bold" width="20" class="mx-auto mb-1"></iconify-icon>
+                                <span class="text-xs font-medium">Motorbike</span>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="vehicle" value="Scooter" class="peer sr-only">
+                            <div class="rounded-lg border border-gray-200 p-3 text-center peer-checked:border-indigo-500 peer-checked:bg-indigo-50 peer-checked:text-indigo-700 hover:bg-gray-50 transition-all">
+                                <iconify-icon icon="solar:bolt-bold" width="20" class="mx-auto mb-1"></iconify-icon>
+                                <span class="text-xs font-medium">E-Scooter</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="p-6 border-t border-gray-100 bg-gray-50 rounded-b-2xl flex gap-3">
+                <button onclick="closeModal('riderModal')" class="flex-1 px-4 py-2.5 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50">Cancel</button>
+                <button onclick="saveRider()" class="flex-1 px-4 py-2.5 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700">Add to Fleet</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, updateDoc, query, orderBy, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    
+    const app = initializeApp({ apiKey: "AIzaSyCuVtOv09ixwnZszRKxjq3PQtiDn3kE5ng", projectId: "tabey-foods" });
+    const db = getFirestore(app);
+    const CLOUD_NAME = "dpcin9ipd"; 
+    const UPLOAD_PRESET = "tabey_unsigned";
+
+    let currentTab = 'orders';
+    
+    // --- UI Logic ---
+    window.switchTab = (tab) => {
+        currentTab = tab;
+        document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+        document.querySelectorAll('.nav-item').forEach(n => {
+            n.classList.remove('bg-indigo-50', 'text-indigo-600');
+            n.classList.add('text-gray-600');
+            const icon = n.querySelector('iconify-icon');
+            if(icon) icon.classList.add('text-gray-400'); 
+        });
+
+        document.getElementById(`view-${tab}`).classList.remove('hidden');
+        
+        const nav = document.getElementById(`nav-${tab}`);
+        if (nav) {
+            nav.classList.remove('text-gray-600');
+            nav.classList.add('bg-indigo-50', 'text-indigo-600');
+            nav.querySelector('iconify-icon').classList.remove('text-gray-400');
+            nav.querySelector('iconify-icon').classList.add('text-indigo-600');
+        }
+
+        const titles = { orders: 'Live Orders', menu: 'Menu Management', stores: 'Store Locations', riders: 'Fleet Management', analytics: 'Analytics Overview', settings: 'Platform Settings' };
+        document.getElementById('pageTitle').innerText = titles[tab];
+
+        const statsBar = document.getElementById('statsBar');
+        if(tab === 'settings') statsBar.style.display = 'none';
+        else statsBar.style.display = 'grid';
+
+        const btn = document.getElementById('mainActionBtn');
+        const btnText = document.getElementById('actionBtnText');
+        
+        if(tab === 'orders' || tab === 'analytics' || tab === 'settings') btn.style.display = 'none';
+        else {
+            btn.style.display = 'flex';
+            if(tab === 'menu') btnText.innerText = "Add Item";
+            if(tab === 'stores') btnText.innerText = "Add Store";
+            if(tab === 'riders') btnText.innerText = "Onboard Rider";
         }
     }
 
-    document.getElementById("status").innerText = "Saving to Database...";
+    // SIDEBAR TOGGLE (MOBILE)
+    window.toggleSidebar = () => {
+        const sidebar = document.getElementById('sidebar');
+        sidebar.classList.toggle('hidden');
+        sidebar.classList.toggle('flex');
+    }
+
+    // LOGOUT
+    window.logout = () => {
+        if(confirm('Are you sure you want to logout?')) {
+            window.location.href = '/'; // Change to your login page
+        }
+    }
+
+    switchTab('orders');
+
+    // --- Toast Notification System ---
+    window.showToast = (msg, type='success') => {
+        const c = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        const icon = type === 'success' ? 'solar:check-circle-bold' : 'solar:danger-circle-bold';
+        const color = type === 'success' ? 'text-emerald-500' : 'text-red-500';
+        
+        toast.className = `flex items-center gap-3 bg-white px-4 py-3 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 transform translate-y-10 opacity-0 transition-all duration-300 pointer-events-auto min-w-[300px]`;
+        toast.innerHTML = `
+            <iconify-icon icon="${icon}" class="${color}" width="24"></iconify-icon>
+            <div class="flex-1 text-sm font-medium text-gray-800">${msg}</div>
+        `;
+        c.appendChild(toast);
+        
+        requestAnimationFrame(() => {
+            toast.classList.remove('translate-y-10', 'opacity-0');
+        });
+
+        setTimeout(() => {
+            toast.classList.add('opacity-0', 'translate-y-4');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
+    // --- Data Listeners ---
     
-    // Save to Firestore
-    await addDoc(collection(db, "menu"), {
-        name, 
-        storeName: store, 
-        variants: vars, 
-        img, 
-        category: cat, 
-        isVeg: isVeg,
-        priority: menuItems.length + 1
+    // ORDERS
+    onSnapshot(query(collection(db, "orders"), orderBy("timestamp", "desc")), (snap) => {
+        const list = document.getElementById("ordersList"); 
+        list.innerHTML = "";
+        let rev = 0; let active = 0;
+        
+        if(snap.empty) {
+            list.innerHTML = `<div class="p-12 text-center flex flex-col items-center justify-center text-gray-400 bg-white rounded-xl border border-gray-200 border-dashed">
+                <iconify-icon icon="solar:clipboard-remove-linear" width="48" class="mb-2 text-gray-300"></iconify-icon>
+                <p>No orders received yet.</p>
+            </div>`;
+        }
+
+        snap.forEach(docSnap => {
+            const o = docSnap.data();
+            if(o.status === 'Completed') rev += (o.bill?.total || 0);
+            if(o.status === 'Pending') active++;
+
+            const badgeColor = o.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' : 'bg-orange-100 text-orange-700 animate-pulse';
+            
+            list.innerHTML += `
+            <div onclick="openOrderModal('${docSnap.id}')" class="bg-white p-4 md:p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col md:flex-row gap-4 items-start md:items-center justify-between group hover:border-indigo-300 hover:shadow-md cursor-pointer transition-all">
+                <div class="flex items-start gap-4 flex-1">
+                    <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center font-bold text-gray-500 shrink-0 text-sm">
+                        ${(o.customer?.name || 'C').charAt(0)}
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="font-bold text-gray-900">${o.customer?.name || 'Customer'}</span>
+                            <span class="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full font-bold ${badgeColor}">${o.status}</span>
+                        </div>
+                        <div class="text-sm text-gray-500 leading-snug line-clamp-1">
+                            ${(o.items||[]).map(i => `<span class="text-gray-700 font-medium">${i.qty}x</span> ${i.name}`).join(', ')}
+                        </div>
+                        <div class="mt-2 text-xs font-medium text-gray-400 flex items-center gap-1">
+                            <iconify-icon icon="solar:clock-circle-linear" width="12"></iconify-icon> ${new Date(o.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                            <span class="mx-1">•</span>
+                            <span>#${docSnap.id.slice(-6).toUpperCase()}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-row md:flex-col items-center md:items-end gap-3 md:gap-1 w-full md:w-auto border-t md:border-t-0 border-gray-100 pt-3 md:pt-0">
+                    <div class="text-lg font-bold text-gray-900">₹${o.bill?.total}</div>
+                    <div class="flex gap-2" onclick="event.stopPropagation()">
+                         <button onclick="deleteDoc(doc(db,'orders','${docSnap.id}'));showToast('Order Deleted', 'error')" class="p-2 text-red-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Delete"><iconify-icon icon="solar:trash-bin-trash-linear" width="18"></iconify-icon></button>
+                        ${o.status !== 'Completed' ? `<button onclick="updateStatus('${docSnap.id}','Completed');showToast('Order Completed')" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition-colors shadow-sm">Complete</button>` : ''}
+                    </div>
+                </div>
+            </div>`;
+        });
+        document.getElementById('totalRevenue').innerText = `₹${rev}`;
+        document.getElementById('activeOrderCount').innerText = active;
     });
 
-    closeModal("menuModal");
-    document.getElementById("status").innerText = "";
-    alert("Item Saved Successfully!");
-  };
-
-  window.saveStore = async () => {
-    const name = document.getElementById("stName").value;
-    if(!name) return;
-    await addDoc(collection(db, "stores"), {
-        name, 
-        openTime: document.getElementById("stOpen").value, 
-        closeTime: document.getElementById("stClose").value, 
-        isOnline: true
+    // USERS LISTENER - FIX FOR REGISTERED USERS COUNT
+    onSnapshot(collection(db, "users"), (snap) => {
+        document.getElementById('totalCustomers').innerText = snap.size || 0;
     });
-    closeModal("storeModal");
-  }
 
-  window.deleteMenu = async (id) => { if(confirm("Delete?")) await deleteDoc(doc(db,"menu",id)); }
-  window.toggleStore = async (id, s) => updateDoc(doc(db,"stores",id), {isOnline:!s});
+    // MENU
+    onSnapshot(collection(db, "menu"), snap => {
+        const list = document.getElementById("menuList"); 
+        list.innerHTML = "";
+        snap.forEach(d => {
+            const item = {id:d.id, ...d.data()};
+            list.innerHTML += `
+            <div class="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-all group h-full flex flex-col">
+                <div class="h-40 bg-gray-100 relative overflow-hidden">
+                    <img src="${item.img || 'https://via.placeholder.com/300'}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                    <div class="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                         <button class="bg-white/90 p-1.5 rounded-lg text-red-500 hover:bg-white hover:text-red-600 shadow-sm backdrop-blur-sm" onclick="deleteMenu('${item.id}')"><iconify-icon icon="solar:trash-bin-trash-linear" width="16"></iconify-icon></button>
+                    </div>
+                    ${item.isVeg ? '<div class="absolute bottom-2 left-2 bg-emerald-500 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-sm flex items-center gap-1"><iconify-icon icon="solar:leaf-bold" width="10"></iconify-icon> VEG</div>' : ''}
+                </div>
+                <div class="p-4 flex-1 flex flex-col">
+                    <div class="flex justify-between items-start mb-1">
+                        <h4 class="font-bold text-gray-900 truncate pr-2 text-sm">${item.name}</h4>
+                    </div>
+                    <p class="text-xs text-gray-500 mb-3 flex items-center gap-1"><iconify-icon icon="solar:shop-linear" width="12"></iconify-icon> ${item.storeName}</p>
+                    <div class="mt-auto pt-3 border-t border-gray-50 flex flex-wrap gap-1">
+                        ${(item.variants||[]).map(v => `<span class="text-[10px] bg-gray-50 border border-gray-100 px-2 py-1 rounded text-gray-600 font-medium">${v.label}: <b>₹${v.price}</b></span>`).join('')}
+                    </div>
+                </div>
+            </div>`;
+        });
+    });
 
+    // STORES
+    onSnapshot(collection(db, "stores"), snap => {
+        const list = document.getElementById("storeList");
+        const select = document.getElementById("storeSelect");
+        list.innerHTML = "";
+        select.innerHTML = "<option value=''>Select Store</option>";
+
+        snap.forEach(d => {
+            const s = d.data();
+            select.innerHTML += `<option value="${s.name}">${s.name}</option>`;
+            
+            const statusColor = s.isOnline ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500';
+            const statusText = s.isOnline ? 'Open' : 'Closed';
+            
+            list.innerHTML += `
+            <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between h-full hover:border-indigo-200 transition-colors">
+                <div>
+                    <div class="flex justify-between items-start mb-3">
+                        <div class="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl"><iconify-icon icon="solar:shop-2-bold" width="24"></iconify-icon></div>
+                        <span class="text-[10px] uppercase font-bold px-2 py-1 rounded-full ${statusColor}">${statusText}</span>
+                    </div>
+                    <h3 class="font-bold text-gray-900 text-lg mb-1">${s.name}</h3>
+                    <p class="text-sm text-gray-500 flex items-center gap-1.5"><iconify-icon icon="solar:clock-circle-linear" width="14"></iconify-icon> ${s.openTime} - ${s.closeTime}</p>
+                </div>
+                <div class="mt-5 flex gap-2 pt-4 border-t border-gray-50">
+                    <button onclick="toggleStore('${d.id}', ${s.isOnline})" class="flex-1 py-2 text-sm font-medium rounded-lg ${s.isOnline ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'} transition-colors">
+                        ${s.isOnline ? 'Close Store' : 'Open Store'}
+                    </button>
+                    <button onclick="deleteStore('${d.id}')" class="p-2 text-gray-400 hover:text-red-500 hover:bg-gray-50 rounded-lg transition-colors"><iconify-icon icon="solar:trash-bin-trash-linear" width="18"></iconify-icon></button>
+                </div>
+            </div>`;
+        });
+    });
+
+    // RIDERS
+    onSnapshot(collection(db, "riders"), snap => {
+        const list = document.getElementById("riderList"); 
+        list.innerHTML = "";
+        let onlineRiders = 0;
+
+        snap.forEach(d => {
+            const r = d.data();
+            const status = r.status || 'Available'; 
+            if(status !== 'Offline') onlineRiders++;
+            
+            let statusClasses = '';
+            if(status === 'Available') statusClasses = 'bg-emerald-100 text-emerald-700 ring-emerald-500/20';
+            else if(status === 'Busy') statusClasses = 'bg-amber-100 text-amber-700 ring-amber-500/20';
+            else statusClasses = 'bg-gray-100 text-gray-600 ring-gray-500/20';
+
+            const deliveries = Math.floor(Math.random() * 20) + 1;
+            const earnings = deliveries * 45;
+
+            list.innerHTML += `
+            <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4 hover:border-indigo-300 transition-all">
+                <div class="relative">
+                    <div class="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-white font-bold text-lg">
+                        ${(r.name || 'R').charAt(0)}
+                    </div>
+                    <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-sm">
+                        <iconify-icon icon="${r.vehicle === 'Scooter' ? 'solar:bolt-circle-bold' : 'solar:bicycling-bold'}" class="text-indigo-600" width="14"></iconify-icon>
+                    </div>
+                </div>
+                
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 mb-0.5">
+                        <h4 class="font-bold text-gray-900 truncate">${r.name || 'Unknown'}</h4>
+                        <span class="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded-full ring-1 ring-inset ${statusClasses}">${status}</span>
+                    </div>
+                    <div class="flex items-center gap-3 text-xs text-gray-500">
+                        <span class="flex items-center gap-1"><iconify-icon icon="solar:phone-linear" width="12"></iconify-icon> ${r.phone || '--'}</span>
+                    </div>
+                </div>
+
+                <div class="text-right hidden sm:block border-l border-gray-100 pl-4">
+                    <div class="text-xs text-gray-400 mb-0.5">Today</div>
+                    <div class="font-bold text-gray-900">₹${earnings}</div>
+                </div>
+
+                <div class="flex gap-1">
+                    <button onclick="deleteDoc(doc(db,'riders','${d.id}'));showToast('Rider Removed')" class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><iconify-icon icon="solar:trash-bin-trash-linear" width="18"></iconify-icon></button>
+                </div>
+            </div>`;
+        });
+        document.getElementById('activeRidersCount').innerText = onlineRiders;
+    });
+
+    // --- Core Functions ---
+    window.updateStatus = (id, st) => updateDoc(doc(db,"orders",id), {status:st});
+    window.deleteMenu = async (id) => { if(confirm("Delete Item?")) { await deleteDoc(doc(db,"menu",id)); showToast("Item Deleted"); }};
+    window.deleteStore = async (id) => { if(confirm("Delete Store?")) { await deleteDoc(doc(db,"stores",id)); showToast("Store Deleted"); }};
+    window.toggleStore = (id, s) => { updateDoc(doc(db,"stores",id), {isOnline:!s}); showToast(s ? "Store Closed" : "Store Opened"); };
+
+    // --- Order Modal Logic ---
+    window.openOrderModal = async (orderId) => {
+        const docRef = doc(db, "orders", orderId);
+        const docSnap = await getDoc(docRef);
+        
+        if (docSnap.exists()) {
+            const o = docSnap.data();
+            document.getElementById("modalOrderId").innerText = orderId.slice(-6).toUpperCase();
+            document.getElementById("modalOrderStatus").innerText = o.status;
+            document.getElementById("modalOrderTime").innerText = new Date(o.timestamp).toLocaleString();
+            document.getElementById("modalCustName").innerText = o.customer?.name || "Guest";
+            document.getElementById("modalCustAddress").innerText = o.customer?.address || "No address provided";
+            
+            const list = document.getElementById("modalItemsList");
+            list.innerHTML = "";
+            o.items.forEach(i => {
+                list.innerHTML += `<div class="flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-gray-100 px-2 py-1 rounded text-xs font-bold text-gray-600">${i.qty}x</div>
+                        <div class="text-sm font-medium text-gray-900">${i.name}</div>
+                    </div>
+                    <div class="text-sm text-gray-600">₹${i.price * i.qty}</div>
+                </div>`;
+            });
+
+            document.getElementById("modalSubtotal").innerText = `₹${o.bill?.subtotal || 0}`;
+            document.getElementById("modalTotal").innerText = `₹${o.bill?.total || 0}`;
+
+            const el = document.getElementById("orderModal");
+            el.classList.remove("hidden");
+            el.classList.add("flex");
+            setTimeout(() => {
+                el.classList.remove("opacity-0");
+                el.querySelector('div').classList.remove("scale-95");
+            }, 10);
+        }
+    };
+
+    // --- Search Logic ---
+    document.getElementById('globalSearch').addEventListener('input', (e) => {
+        const term = e.target.value.toLowerCase();
+        if(!term && currentTab !== 'orders') return; 
+        
+        const container = document.querySelector(`#view-${currentTab} > div[class*='grid']`);
+        if(!container) return;
+        
+        Array.from(container.children).forEach(card => {
+            const text = card.innerText.toLowerCase();
+            if(text.includes(term)) card.style.display = "";
+            else card.style.display = "none";
+        });
+    });
+
+    // --- Modals ---
+    window.openAddModal = () => {
+        let modalId = '';
+        if(currentTab==='menu') {
+            document.getElementById("foodName").value="";
+            document.getElementById("variantsWrap").innerHTML="";
+            addVariantRow("Standard", "");
+            modalId = "menuModal";
+        } else if(currentTab==='stores') {
+            modalId = "storeModal";
+        } else if(currentTab==='riders') {
+            modalId = "riderModal";
+        }
+        if(modalId) {
+            const el = document.getElementById(modalId);
+            el.classList.remove("hidden");
+            setTimeout(() => {
+                el.classList.remove("opacity-0");
+                el.querySelector('div').classList.remove("scale-95");
+            }, 10);
+            el.classList.add("flex");
+        }
+    };
+
+    window.closeModal = (id) => {
+        const el = document.getElementById(id);
+        el.classList.add("opacity-0");
+        el.querySelector('div').classList.add("scale-95");
+        setTimeout(() => {
+            el.classList.add("hidden");
+            el.classList.remove("flex");
+        }, 200);
+    };
+
+    // --- Helpers ---
+    window.addVariantRow = (l="", p="") => {
+        document.getElementById("variantsWrap").insertAdjacentHTML('beforeend', 
+        `<div class="flex gap-2 items-center animate-in fade-in slide-in-from-top-1">
+            <input class="vLabel flex-1 bg-white border border-gray-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-indigo-500" placeholder="Size (e.g. Small)" value="${l}">
+            <input class="vPrice w-20 bg-white border border-gray-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-indigo-500" type="number" placeholder="₹" value="${p}">
+            <button class="text-gray-400 hover:text-red-500 p-1" onclick="this.parentElement.remove()"><iconify-icon icon="solar:close-circle-linear" width="16"></iconify-icon></button>
+        </div>`);
+    }
+
+    // --- Saving Logic ---
+    window.saveItem = async () => {
+        const btn = document.getElementById('saveBtnText');
+        const originalText = btn.innerText;
+        btn.innerText = "Uploading...";
+        
+        try {
+            const name = document.getElementById("foodName").value;
+            const store = document.getElementById("storeSelect").value;
+            const file = document.getElementById("foodImg").files[0];
+            const vars = [];
+            document.querySelectorAll("#variantsWrap > div").forEach(r => {
+                vars.push({ label: r.querySelector(".vLabel").value, price: Number(r.querySelector(".vPrice").value) });
+            });
+
+            if(!name || !store) throw new Error("Missing Fields");
+
+            let img = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=300";
+            if(file) {
+                const fd = new FormData();
+                fd.append("file", file);
+                fd.append("upload_preset", UPLOAD_PRESET);
+                const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: "POST", body: fd });
+                const data = await res.json();
+                img = data.secure_url;
+            }
+
+            await addDoc(collection(db, "menu"), {
+                name, storeName: store, variants: vars, img,
+                category: document.getElementById("foodCat").value,
+                isVeg: document.getElementById("isVeg").checked,
+                timestamp: Date.now()
+            });
+
+            closeModal("menuModal");
+            showToast("Item Added Successfully");
+        } catch(e) {
+            alert("Error saving item: " + e.message);
+        } finally {
+            btn.innerText = originalText;
+        }
+    };
+
+    window.saveStore = async () => {
+        const name = document.getElementById("stName").value;
+        if(!name) return;
+        await addDoc(collection(db, "stores"), {
+            name, 
+            openTime: document.getElementById("stOpen").value, 
+            closeTime: document.getElementById("stClose").value, 
+            isOnline: true
+        });
+        closeModal("storeModal");
+        showToast("Store Created");
+    }
+
+    window.saveRider = async () => {
+        const name = document.getElementById("riderName").value;
+        const phone = document.getElementById("riderPhone").value;
+        const vehicle = document.querySelector('input[name="vehicle"]:checked').value;
+        
+        if(!name) return;
+        await addDoc(collection(db, "riders"), {
+            name, phone, vehicle, 
+            status: 'Available', 
+            timestamp: Date.now()
+        });
+        closeModal("riderModal");
+        showToast("Rider Onboarded");
+    }
+
+    Object.assign(window, { deleteDoc, doc, db });
 </script>
-</body>
-</html>
+
+</body></html>
