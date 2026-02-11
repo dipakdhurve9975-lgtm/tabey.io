@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TABEY • About Us</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700&display=swap" rel="stylesheet">
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+  <style>
+    body { background: #0F172A; color: #fff; font-family: 'Outfit', sans-serif; padding: 20px; line-height: 1.6; max-width: 800px; margin: 0 auto; }
+    
+    .header { 
+      display: flex; align-items: center; margin-bottom: 25px; 
+      padding-bottom: 15px; border-bottom: 1px solid #334155; 
+      position: sticky; top: 0; background: #0F172A; z-index: 10;
+    }
+    
+    .back-btn { font-size: 24px; color: white; text-decoration: none; margin-right: 15px; }
+    h1 { font-size: 24px; margin: 0; font-weight: 700; }
+    
+    .content-area { padding-bottom: 40px; }
+    
+    h2 { color: #FF4B3A; font-size: 20px; margin-top: 30px; margin-bottom: 10px; font-weight: 700; }
+    p { color: #94A3B8; font-size: 15px; margin-bottom: 15px; text-align: justify; }
+    
+    .highlight { color: #fff; font-weight: 600; }
+
+    /* Team Section Grid */
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
+    .team-card {
+      background: #1E293B;
+      padding: 15px;
+      border-radius: 16px;
+      text-align: center;
+      border: 1px solid #334155;
+    }
+    .team-avatar {
+      width: 60px; height: 60px;
+      background: #334155;
+      border-radius: 50%;
+      margin: 0 auto 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      color: #FF4B3A;
+    }
+    .team-name { font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 2px; }
+    .team-role { font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* Mission Box */
+    .mission-box {
+      background: linear-gradient(135deg, #FF4B3A 0%, #FF7F50 100%);
+      padding: 25px;
+      border-radius: 20px;
+      text-align: center;
+      margin: 30px 0;
+      box-shadow: 0 10px 30px rgba(255, 75, 58, 0.2);
+    }
+    .mission-text { color: white; font-weight: 600; font-size: 16px; margin: 0; text-align: center; }
+    .mission-icon { font-size: 32px; color: white; margin-bottom: 10px; display: block; }
+
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <a href="customer-login.html" class="back-btn"><i class='bx bx-arrow-back'></i></a>
+    <h1>About TABEY</h1>
+  </div>
+
+  <div class="content-area">
+    <div class="mission-box">
+      <i class='bx bxs-rocket mission-icon'></i>
+      <p class="mission-text">"Delivering happiness, one meal at a time. Fast, fresh, and straight to your door."</p>
+    </div>
+
+    <h2>Who We Are</h2>
+    <p>TABEY is more than just a food delivery app. We are a community-driven platform dedicated to connecting hungry foodies with the best local restaurants, cafes, and home kitchens in the city. Born out of a passion for great food and technology, TABEY aims to revolutionize hyper-local delivery.</p>
+
+    <h2>Our Vision</h2>
+    <p>We envision a world where craving your favorite meal doesn't mean waiting for hours. We are building a logistics network that prioritizes speed, hygiene, and customer satisfaction above all else.</p>
+
+    <h2>Why Choose TABEY?</h2>
+    <p>
+      <span class="highlight">⚡ Lightning Fast:</span> Our optimized delivery algorithms ensure your food reaches you hot.<br>
+      <span class="highlight">🛡️ Safe & Hygienic:</span> We partner only with vendors who adhere to strict safety standards.<br>
+      <span class="highlight">❤️ Local Love:</span> We support small businesses and local food heroes.
+    </p>
+
+    <h2>Meet the Team</h2>
+    <div class="team-grid">
+      <div class="team-card">
+        <div class="team-avatar"><i class='bx bxs-user'></i></div>
+        <div class="team-name">Founder</div>
+        <div class="team-role">CEO</div>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar"><i class='bx bxs-server'></i></div>
+        <div class="team-name">Tech Lead</div>
+        <div class="team-role">CTO</div>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar"><i class='bx bxs-package'></i></div>
+        <div class="team-name">Ops Head</div>
+        <div class="team-role">Logistics</div>
+      </div>
+    </div>
+
+    <div style="margin-top: 40px; text-align: center;">
+      <p style="font-size: 12px; color: #64748B;">© 2025 TABEY Foods. All rights reserved.</p>
+    </div>
+  </div>
+
+</body>
+</html>
