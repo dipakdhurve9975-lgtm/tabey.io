@@ -152,6 +152,11 @@
         window.location.href = "page2.html"; 
       }, 300);
     }, 4000); // 4 seconds total duration
+
+    // service worker 
+    if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/service-worker.js');
+}
   </script>
 
 </body>
