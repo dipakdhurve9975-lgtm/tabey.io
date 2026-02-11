@@ -72,6 +72,7 @@
     <div class="skip" onclick="guestMode()">Skip & Continue as Guest</div>
 
     <div class="legal-footer">
+      <a href="about.html" class="legal-link">About Us</a>
       <a href="terms.html" class="legal-link">Terms & Conditions</a>
       <a href="privacy.html" class="legal-link">Privacy Policy</a>
       <a href="support.html" class="legal-link">Help & Support</a>
@@ -84,6 +85,11 @@
 
   const app = initializeApp({ apiKey: "AIzaSyCuVtOv09ixwnZszRKxjq3PQtiDn3kE5ng", projectId: "tabey-foods" });
   const db = getFirestore(app);
+
+  // --- AUTO REDIRECT IF ALREADY LOGGED IN ---
+  if(localStorage.getItem("tabey_user")) {
+    window.location.href = "customer.html";
+  }
 
   let mode = "login";
   const els = {
@@ -143,7 +149,7 @@
 
   window.guestMode = () => {
     localStorage.removeItem("tabey_user");
-    localStorage.setItem("tabey_role", "customer");
+    localStorage.setItem("tabey_role", "guest");
     location.href = "customer.html";
   };
 
