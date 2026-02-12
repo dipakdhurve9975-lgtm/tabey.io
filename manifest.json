@@ -17,9 +17,10 @@
       "type": "image/png"
     },
     {
-      "src": "/tabeyicon-512.png",
+      "src": "/tabey-icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
   ]
 }
+
