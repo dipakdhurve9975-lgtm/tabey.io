@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SANGHX • Select Mode</title>
+  <title>TABEY • Select Mode</title>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
   <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
   <style>
@@ -70,17 +70,17 @@
 }
       else if (role === 'vendor') {
         // Goes to Shop Login
-        localStorage.setItem('sanghx_role', 'vendor');
+        localStorage.setItem('tabey_role', 'vendor');
         window.location.href = 'vendor-login.html';
       }
       else if (role === 'rider') {
         // Goes to Rider Login
-        localStorage.setItem('sanghx_role', 'rider');
+        localStorage.setItem('tabey_role', 'rider');
         window.location.href = 'rider-login.html';
       }
       else if (role === 'admin') {
         // Goes to Super Admin Login
-        localStorage.setItem('sanghx_role', 'admin');
+        localStorage.setItem('tabey_role', 'admin');
         window.location.href = 'login.html';
       }
     }
