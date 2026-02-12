@@ -3,8 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>SANGHX • Delivery</title>
-  <link rel="manifest" href="manifest.json">
+  <title>TABEY • Delivery</title>
+  <link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#ff5722">
+
   
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
   
@@ -154,8 +156,13 @@
     }, 4000); // 4 seconds total duration
 
     // service worker 
-    if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/service-worker.js');
+   if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/service-worker.js')
+    .then(function(reg) {
+      console.log("Service Worker Registered", reg);
+    }).catch(function(err) {
+      console.log("Service Worker Failed", err);
+    });
 }
   </script>
 
