@@ -1,11 +1,15 @@
 {
   "name": "TABEY - Food Delivery",
   "short_name": "TABEY",
+  "description": "Fast and reliable food delivery at your doorstep.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#ff6600",
+  "theme_color": "#ff5722",
   "orientation": "portrait",
+  "scope": "/",
+  "categories": ["food", "shopping"],
+  "lang": "en",
   "icons": [
     {
       "src": "tabey-icon-192.png",
@@ -13,7 +17,7 @@
       "type": "image/png"
     },
     {
-      "src": "tabey-icon-512.png",
+      "src": "tabeyicon-512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
